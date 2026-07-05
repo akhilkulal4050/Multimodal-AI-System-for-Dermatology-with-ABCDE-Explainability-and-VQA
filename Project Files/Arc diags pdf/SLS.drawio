@@ -1,0 +1,46 @@
+<mxfile host="embed.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.2.6">
+  <diagram name="Page-1" id="unique-diagram-id">
+    <mxGraphModel dx="1089" dy="787" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="002f509f-2187-48ca-84a5-bbbf784365de" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=-45;fontSize=70;fontColor=#E0E0E0;fontStyle=1;" value="Converted by ImageToDrawio" vertex="1">
+          <mxGeometry height="100" width="500" x="300" y="375" as="geometry" />
+        </mxCell>
+        <mxCell id="v1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=default;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="550" width="270" x="150" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="v2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=default;strokeColor=default;" value="Input: Skin Image ≤5MB" vertex="1">
+          <mxGeometry height="50" width="200" x="180" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="v3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=default;strokeColor=default;" value="Preproc: Resize 512×512&lt;br&gt;Normalize, Hair removal" vertex="1">
+          <mxGeometry height="60" width="200" x="180" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="v4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=default;strokeColor=default;" value="ARCUNet&lt;br&gt;Segmentation CNN&lt;br&gt;Input: 512×512" vertex="1">
+          <mxGeometry height="70" width="200" x="180" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="v5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=default;strokeColor=default;" value="Output: Lesion Mask (512x512)" vertex="1">
+          <mxGeometry height="50" width="200" x="180" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" edge="1" parent="1" source="v2" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="v3" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="280" y="230" as="sourcePoint" />
+            <mxPoint x="280" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="v3" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="v4" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="280" y="370" as="sourcePoint" />
+            <mxPoint x="280" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="v4" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="v5" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="280" y="530" as="sourcePoint" />
+            <mxPoint x="280" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

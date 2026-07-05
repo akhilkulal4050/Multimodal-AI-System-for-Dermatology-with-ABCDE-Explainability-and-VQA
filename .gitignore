@@ -1,0 +1,54 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Model weights & checkpoints
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.ckpt
+*.h5
+*.onnx
+*.pkl
+*.pb
+
+# Pretrained model folders
+llava-v1.6-mistral-7b-hf/
+**/checkpoints/
+
+# Datasets & large data files
+*.parquet
+data/
+datasets/
+
+# Vector DB
+chroma_db/
+**/chroma_db/
+
+# Jupyter / Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# Logs & experiment tracking
+*.log
+runs/
+wandb/
+logs/
+
+# Environment / secrets
+.env
+.env.local
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

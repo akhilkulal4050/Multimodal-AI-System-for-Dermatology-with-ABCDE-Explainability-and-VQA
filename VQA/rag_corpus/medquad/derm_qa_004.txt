@@ -1,0 +1,2 @@
+Q: What surgical margins are recommended for melanoma?
+A: Margins by Breslow thickness: in situ 0.5-1.0cm; up to 1.0mm requires 1.0cm margins; 1.01-2.0mm requires 1-2cm margins; over 2.0mm requires 2.0cm margins. Sentinel lymph node biopsy is standard for melanomas >0.8mm or those with ulceration or high mitotic rate.

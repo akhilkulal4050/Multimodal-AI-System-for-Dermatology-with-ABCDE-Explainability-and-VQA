@@ -1,0 +1,13 @@
+@article{BENCEVIC2024108044,
+title = {Understanding skin color bias in deep learning-based skin lesion segmentation},
+journal = {Computer Methods and Programs in Biomedicine},
+volume = {245},
+pages = {108044},
+year = {2024},
+issn = {0169-2607},
+doi = {https://doi.org/10.1016/j.cmpb.2024.108044},
+url = {https://www.sciencedirect.com/science/article/pii/S0169260724000403},
+author = {Marin Benčević and Marija Habijan and Irena Galić and Danilo Babin and Aleksandra Pižurica},
+keywords = {AI fairness, Dermatological image analysis, Deep neural networks, Skin lesion segmentation},
+abstract = {Background: The field of dermatological image analysis using deep neural networks includes the semantic segmentation of skin lesions, pivotal for lesion analysis, pathology inference, and diagnoses. While biases in neural network-based dermatoscopic image classification against darker skin tones due to dataset imbalance and contrast disparities are acknowledged, a comprehensive exploration of skin color bias in lesion segmentation models is lacking. It is imperative to address and understand the biases in these models. Methods: Our study comprehensively evaluates skin tone bias within prevalent neural networks for skin lesion segmentation. Since no information about skin color exists in widely used datasets, to quantify the bias we use three distinct skin color estimation methods: Fitzpatrick skin type estimation, Individual Typology Angle estimation as well as manual grouping of images by skin color. We assess bias across common models by training a variety of U-Net-based models on three widely-used datasets with 1758 different dermoscopic and clinical images. We also evaluate commonly suggested methods to mitigate bias. Results: Our findings expose a significant and large correlation between segmentation performance and skin color, revealing consistent challenges in segmenting lesions for darker skin tones across diverse datasets. Using various methods of skin color quantification, we have found significant bias in skin lesion segmentation against darker-skinned individuals when evaluated both in and out-of-sample. We also find that commonly used methods for bias mitigation do not result in any significant reduction in bias. Conclusions: Our findings suggest a pervasive bias in most published lesion segmentation methods, given our use of commonly employed neural network architectures and publicly available datasets. In light of our findings, we propose recommendations for unbiased dataset collection, labeling, and model development. This presents the first comprehensive evaluation of fairness in skin lesion segmentation.}
+}

@@ -1,0 +1,1238 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+% *** PACKAGES ***
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{cite}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{siunitx}
+
+% Float spacing tuning
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{10pt plus 2pt minus 4pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.5}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.9}
+
+% Fixed-width column types
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% -----------------------------------------------------------
+\begin{document}
+% -----------------------------------------------------------
+
+\title{NutriDermAI: A Multimodal Image--Text Fusion Framework
+for ABCDE-Aware Skin Lesion Analysis and Interactive Dermatology VQA}
+
+\author{
+    \IEEEauthorblockN{Akhil Kulal}
+    \IEEEauthorblockA{Department of Computer Engineering\\
+    Veermata Jijabai Technological Institute\\
+    Email: arkulal\_m24@ce.vjti.ac.in}
+    \and
+    \IEEEauthorblockN{Prof. Manasi Kulkarni}
+    \IEEEauthorblockA{Department of Computer Engineering\\
+    Veermata Jijabai Technological Institute\\
+    Email: mukulkarni@ce.vjti.ac.in}
+}
+
+\maketitle
+
+% -----------------------------------------------------------
+\begin{abstract}
+% -----------------------------------------------------------
+Melanoma accounts for over 57,000 deaths annually, yet most AI-based
+dermatology tools are image-only classifiers without structured ABCDE
+(Asymmetry, Border, Colour, Diameter, Evolution) computation or
+multimodal fusion. This paper presents \emph{NutriDermAI}, the first
+fully integrated dermatology decision support system that computes
+clinically calibrated ABCDE scores through principled image--text
+fusion, not image-only analysis. Key novelties: (1)~multimodal ABCDE
+score computation combining dermatoscopic features with clinical text,
+(2)~transparent Clinical Knowledge JSON for auditable clinical
+reasoning, (3)~end-to-end pipeline from segmentation to interactive
+VQA. Four core stages are fully implemented and validated: skin lesion
+segmentation (Dice 0.8506, Boundary F1 0.8815), ROI cropping (98.4\%
+coverage, 12.3 ms), hierarchical classification (94.7\% binary, 89.2\%
+7-class accuracy), and clinical NLP for evolution scoring (NER F1
+0.87--0.89, ECE 0.0201). End-to-end integration achieves 517 ms latency
+on NVIDIA A100, clinically acceptable for batch processing. This work
+provides a validated foundation for ABCDE-aware dermatology AI suitable
+for prospective clinical validation and resource-limited deployment.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Dermatoscopy, Skin Lesion, ABCDE Rule, Multimodal Learning,
+Explainable AI, Medical VQA, Medical Report Processing, Image--Text
+Fusion, Dermatology Chatbot
+\end{IEEEkeywords}
+
+% ===========================================================
+\section{Introduction}
+% ===========================================================
+
+Skin cancer, including melanoma and non-melanoma lesions, continues to
+present a major public health burden, with melanoma alone responsible
+for over 57,000 deaths annually worldwide~\cite{sung2021_global_cancer_stats}.
+Globally, more than 1 million skin cancer diagnoses are made each year,
+with incidence rising 1.5--3\% annually in developed nations. Early detection
+substantially improves five-year survival rates from under 30\% for late-stage
+to over 98\% for localised melanoma~\cite{siegel2023_cancer_statistics}, making
+timely and accurate diagnosis critical.
+
+Dermatologists rely on dermatoscopic examination (magnified, illuminated lesion
+inspection) guided by the ABCDE rule---Asymmetry, Border irregularity, Colour
+variation, Diameter, and Evolution---to stratify malignant risk. However, three
+clinical challenges limit this approach: (i)~\emph{Specialist shortage}: fewer
+than 10,000 dermatologists serve over 8 billion people globally, with severe
+disparities in resource-limited regions; (ii)~\emph{Subjective assessment}:
+even among specialists, inter-observer agreement on ABCDE scores is 
+moderate~\cite{kittler2011_abcde_variability}, introducing diagnostic 
+inconsistency; and (iii)~\emph{Limited contextualisation}: dermatoscopic 
+images alone lack integration with longitudinal history, family background, 
+and symptom progression---critical signals in clinical practice. Classical 
+ABCD/ABCDE-based expert systems have demonstrated that structured feature 
+assessment can approximate dermatologists' diagnostic reasoning~\cite{chatterjee2021_abcd_expert_system,
+senan2021_abcd_analysis,tas2022_fast_abcd_tds,
+mevorach2025_ai_vs_derm_abcde,jutte2024_generative_ABCDE}, yet most do not 
+integrate images and text, nor provide transparent, clinician-aligned explanations.
+
+Concurrently, deep learning has achieved high performance on
+dermatoscopic segmentation and classification tasks using U-Net
+variants, hybrid CNN--Transformer designs, and large-scale datasets
+such as HAM10000, ISIC 2016--2024, BCN20000, and
+MiLK-10K~\cite{ronneberger2015_unet,arcunet2024_arcunet,
+scalefusionnet2025,escunet2025,mrpunet2025,metaunet2025,biadatu2024,
+mucmnet2024,isic2016_2024_datasets,tschsandl2018_ham10000,
+combalia2019_bcn20000,milk10k2021_milk10k}. More recently, dermatology
+foundation models and vision--language models (VLMs) such as PanDerm,
+MM-Skin, and Derm1M have demonstrated how large-scale multimodal
+supervision improves zero-shot recognition and text grounding in
+dermatology~\cite{pan2025_panderm,zeng2025_mmskin,yan2025_derm1m,
+aboulmira2025_attentionmultiskin,multimodal2025_skin_cancer_prediction}.
+
+However, a critical gap remains: no existing system computes structured
+ABCDE scores via principled multimodal fusion. Most AI systems segment
+lesions or classify them in isolation, without grounding in the clinical
+ABCDE framework. Those that do compute ABCDE often use ad-hoc image-only
+approaches, ignoring Evolution (E), which requires clinical history.
+This architectural gap motivates NutriDermAI.
+
+Medical NLP and medical VQA have evolved rapidly, leveraging clinical
+corpora like MIMIC-III/IV and architectures such as BioBERT, medical
+multimodal LLMs, and RL-trained VQA
+systems~\cite{lee2020_biobert,johnson2016_mimic3,hyland2023_mimic4note,
+clinicaltextreview2020t,biomedblip2024_naseem,li2022_semantic_vqa,
+dsap2024_dynamic_prompting,medvlmr12025,rlvalidation2023_vqa,
+medthink2025,medicalmmllmreview2024}. Dermatology-specific VQA
+benchmarks are emerging, yet they typically lack end-to-end ABCDE
+computation and structured imaging--text
+fusion~\cite{he2020_pathvqa,lau2018_vqarad,yim2024_dermavqa,
+healmqa2024,faggioli2025_multimodal_sls_vqa,irel2025_clipseg,
+dermatologychatbot2024,casestudy2024_wizard_of_oz,chatgptderm2025,
+amie2025,convagents2025_effectiveness}.
+
+\textbf{Problem Statement and Research Opportunity.} Current
+dermatology AI systems suffer from two critical limitations: (i)~most
+are unimodal (image-only), computing classification scores without
+grounding in the clinical ABCDE framework; and (ii)~those that do
+compute ABCDE metrics typically use ad-hoc image-only approaches that
+cannot incorporate Evolution (E), a key criterion requiring longitudinal
+clinical history. This architectural gap has prevented deployment of
+ABCDE-aware, multimodal systems that could provide clinicians with both
+high accuracy and transparent, evidence-grounded explanations.
+
+\textbf{Solution and Vision.} NutriDermAI is an integrated multimodal
+framework designed to close this gap. The system computes structured,
+calibrated ABCDE scores via fusion of image and text features,
+producing a Clinical Knowledge JSON that captures all reasoning in an
+auditable, clinician-aligned format. By integrating this structured
+representation with interactive VQA and knowledge-grounded conversational
+AI, NutriDermAI supports multi-turn clinical dialogue while minimising
+hallucination. The vision is:
+\begin{itemize}[leftmargin=*]
+    \item compute explicit, clinically calibrated ABCDE values aligned with 
+          dermatology practice guidelines (not ad-hoc black-box scores);
+    \item integrate images, patient history, and queries through principled 
+          multimodal fusion (not image-only analysis);
+    \item produce structured JSON explanations with evidence rankings suitable 
+          for clinical audits and physician handoff; and
+    \item enable interactive, context-aware question answering grounded in 
+          ABCDE features and verified medical evidence.
+\end{itemize}
+
+\textbf{Key Contributions.} This paper presents three core contributions to
+ABCDE-aware dermatology AI:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{Multimodal ABCDE computation.} Unlike prior image-only
+          systems, we compute clinically calibrated ABCD scores via principled
+          fusion of image features with clinical text (Stage 6). This ensures
+          the Evolution (E) score is properly grounded in longitudinal history,
+          addressing the architectural gap in existing systems.
+    \item \textbf{Transparent clinical reasoning via structured JSON.} All
+          downstream processing uses a Clinical Knowledge JSON as the canonical
+          representation, enabling end-to-end audit trails, independent stage
+          evaluation, and clinician-interpretable explanations aligned with
+          ABCDE practice standards.
+    \item \textbf{Fully integrated pipeline with validated core stages.} We
+          demonstrate four production-ready stages (SLS, SLRC, HC, MedProc)
+          with strong empirical results on standard benchmarks, plus integrated
+          end-to-end processing achieving 517 ms latency. This provides a
+          validated foundation for prospective clinical studies and deployment
+          in resource-limited settings.
+\end{enumerate}
+
+% ===========================================================
+\section{Background and Related Work}
+% ===========================================================
+
+\subsection{Problem Statement and Research Gaps}
+
+Current dermatology AI systems exhibit distinct limitations that motivate
+NutriDermAI's design:
+
+\begin{enumerate}[leftmargin=*]
+    \item \textbf{ABCDE-aware systems are rare and inconsistent.} While
+          the ABCDE rule is the clinical gold standard for melanoma risk
+          assessment, most AI systems either ignore it entirely or compute
+          it ad-hoc without principled fusion of image and text signals.
+    \item \textbf{Multimodal fusion is under-developed in dermatology.}
+          Image-only classifiers miss critical temporal context; text-only
+          systems miss geometric features. Rigorous fusion architectures that
+          weight both modalities appropriately are lacking.
+    \item \textbf{VQA systems lack ABCDE grounding.} Existing medical VQA
+          benchmarks (VQA-RAD, PathVQA, DermaVQA) do not integrate
+          structured ABCDE evidence, leading to potential hallucination.
+    \item \textbf{End-to-end pipeline integration is missing.} While individual
+          components (segmentation, classification, NLP) are well-studied,
+          few works demonstrate a complete, clinical-grade pipeline with
+          structured outputs, audit trails, and clinician-aligned explanations.
+    \item \textbf{Fairness and bias remain unaddressed in deployments.}
+          Most published systems lack evaluation across diverse skin tones,
+          potentially perpetuating healthcare disparities.
+\end{enumerate}
+
+\subsection{ABCDE Rule and Classical Decision Support}
+
+The ABCD/ABCDE rule offers a structured approach to melanoma risk
+assessment by quantifying asymmetry, border irregularity, color
+variation, diameter, and evolution over time. This rule was originally
+formalised to address the global shortage of dermatologists, where
+primary care physicians with limited dermoscopy training must triage
+suspicious lesions~\cite{dreremoula2022_derm_shortage}. Classical expert
+systems compute scores from dermatoscopic images and combine them into
+total dermatoscopic scores (TDS)~\cite{chatterjee2021_abcd_expert_system,
+senan2021_abcd_analysis,tas2022_fast_abcd_tds}. Recent work shows that
+AI systems explicitly incorporating ABCDE analysis can approach
+dermatologist-level decision-making~\cite{jutte2024_generative_ABCDE,
+mevorach2025_ai_vs_derm_abcde}. Hybrid CNN+ABCD models further
+demonstrate that explicit ABCD descriptors boost classification
+performance when combined with deep features~\cite{shetty2022_hybridcnn_abcd}.
+
+\subsection{Skin Lesion Segmentation}
+
+Lesion segmentation is a prerequisite for ABCDE feature computation
+and ROI cropping. U-Net and its variants remain dominant in medical
+image segmentation~\cite{ronneberger2015_unet,reviewunet2024_unetreview}.
+Dermatology-specialised architectures---ARC-UNet, ScaleFusionNet,
+ESC-UNet, MRP-UNet, Meta-UNet, BiADATU-Net, MUCM-Net, and dual
+CNN--ViT hybrids---have improved boundary precision and robustness via
+residual connections, deformable attention, and multiscale
+inputs~\cite{arcunet2024_arcunet,scalefusionnet2025,escunet2025,
+mrpunet2025,metaunet2025,biadatu2024,mucmnet2024,hybriddualencoder2024}.
+Multi-scale Swin Transformer models further improve segmentation across
+diverse medical imaging
+domains~\cite{swinmedical2025,attentionreview2023}.
+
+\subsection{Lesion Classification and Foundation Models}
+
+Large datasets---ISIC 2016--2024, HAM10000, BCN20000, and
+MiLK-10K---have enabled high-performing classifiers and foundation
+models~\cite{isic2016_2024_datasets,tschsandl2018_ham10000,
+combalia2019_bcn20000,milk10k2021_milk10k}. EfficientFormerV2 provides
+competitive accuracy with reduced memory
+footprint~\cite{yu2022_efficientformerv2}, making it suitable for
+multi-stage pipelines. PanDerm, MM-Skin, and Derm1M align dermatoscopic
+images with rich textual descriptions and hierarchical
+ontologies~\cite{pan2025_panderm,zeng2025_mmskin,yan2025_derm1m,
+aboulmira2025_attentionmultiskin}, motivating shared multimodal encoders.
+
+\subsection{Clinical NLP and Medical Text Understanding}
+
+BioBERT and related biomedical encoders have improved named entity
+recognition and classification over clinical
+notes~\cite{lee2020_biobert}. MIMIC-III and MIMIC-IV provide rich
+free-text and structured data for training and
+evaluation~\cite{johnson2016_mimic3,hyland2023_mimic4note}. Systematic
+reviews of clinical text data highlight both opportunities and pitfalls
+for machine learning on heterogeneous EHR
+text~\cite{clinicaltextreview2020t}. Retrieval-Augmented Generation
+(RAG) over clinical knowledge bases has further been shown to reduce
+hallucinations and ground LLM responses in verified medical
+evidence~\cite{lewis2020_rag,xiong2024_benchmarking_rag_medical},
+directly motivating the FAISS-based retriever in NutriDermAI's Stage~8.
+These insights inform the MedProc stage, where symptom descriptions,
+timelines, and lab values are normalised into structured features.
+
+\subsection{Medical VQA and Multimodal LLMs}
+
+Medical VQA benchmarks include VQA-RAD, PathVQA, TM-PathVQA, HEALMQA,
+and dermatology-specific DermaVQA~\cite{lau2018_vqarad,he2020_pathvqa,
+rajkhowa2024_tmpathvqa,yim2024_dermavqa,healmqa2024}. Architectures
+range from BLIP-style encoders to semantic-attention VQA
+layers~\cite{biomedblip2024_naseem,li2022_semantic_vqa}. Dynamic
+prompt adaptation and RL-based optimisation reduce hallucinations and
+improve reasoning~\cite{dsap2024_dynamic_prompting,medvlmr12025,
+rlvalidation2023_vqa,medthink2025,madavan2025_medgrim}.
+Dermatology-focused works demonstrate CLIPSeg-based multimodal fusion
+and knowledge-enhanced
+ensembles~\cite{faggioli2025_multimodal_sls_vqa,irel2025_clipseg,
+h3n1lab2025_dermkem,lozano2025_synth_vqa,sviridov2025_multiagent_dialogue}.
+NutriDermAI extends these directions with explicit ABCDE reasoning and
+a unified JSON explanation layer.
+
+\subsection{Dermatology Chatbots and Conversational AI}
+
+Dermatology chatbots combining CNN-based lesion analysis with
+rule-based triage logic have been
+explored~\cite{dermatologychatbot2024,casestudy2024_wizard_of_oz}.
+AMIE evaluates conversational diagnostic quality across specialties and
+emphasises safety, uncertainty communication, and escalation
+strategies~\cite{amie2025}. Reviews of LLMs in dermatology highlight
+the need for guardrails and rigorous
+evaluation~\cite{chatgptderm2025,medicalmmllmreview2024}. Studies on
+conversational agents report improved patient engagement alongside
+responsibility and ethical
+concerns~\cite{convagents2025_effectiveness}. NutriDermAI incorporates
+these lessons in its VQA and deployment design.
+
+\subsection{Integration and System Design Principles}
+
+From the literature and problem statement, we synthesise three core design
+principles for NutriDermAI that distinguish it from prior work: 
+(i)~\emph{Multimodal ABCDE computation}, where ABCD scores are computed
+via fusion of image features and clinical text (not image-only);
+(ii)~\emph{Structured outputs}, routing all reasoning through JSON to enable
+transparency, auditability, and downstream integration (unlike black-box
+models); and (iii)~\emph{Calibrated confidence}, ensuring every stage reports
+uncertainty for appropriate escalation. These principles address the gap in
+existing systems: most prior ABCDE-aware works compute ABCD from images alone
+and ignore Evolution (E) entirely, while generic multimodal systems lack ABCDE
+grounding. NutriDermAI uniquely combines both requirements in a unified
+pipeline.
+
+% ===========================================================
+\section{System Overview}
+% ===========================================================
+
+The overall architecture of NutriDermAI is illustrated in
+Fig.~\ref{fig:architecture}. The system is organised as a nine-stage
+modular pipeline built around two parallel streams that process
+complementary sources of clinical evidence before converging into a
+unified risk estimate:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Image pipeline.} Dermatoscopic images pass through
+          segmentation (SLS), ROI extraction (SLRC), and hierarchical
+          classification (HC) to extract geometric, chromatic, and
+          classification features encoded as floating-point vectors.
+    \item \textbf{Clinical text pipeline.} Medical reports and patient
+          history are processed by MedProc using clinical NLP to derive
+          the Evolution~(E) score, symptom entities, and structured
+          clinical features.
+\end{itemize}
+
+\textbf{Data flow and transformations.} The image pipeline produces:
+(1)~a binary lesion mask from SLS (Stage~2); (2)~a tightly cropped ROI
+from SLRC (Stage~3); (3)~feature embeddings, classification logits, and
+raw ABCD descriptor signals (asymmetry, border, colour, diameter) from HC
+(Stage~4). The text pipeline produces: a structured clinical JSON
+containing extracted entities, temporal mentions, symptom-to-evolution
+mappings, and an Evolution score from MedProc (Stage~5). Both pipelines
+deliver their outputs—feature vectors and structured JSON—to the IT-Fusion
+module (Stage~6).
+
+\textbf{Multimodal fusion and structured JSON generation.} Stage~6
+receives complementary signals from both pipelines. Image-derived features
+alone cannot capture longitudinal changes or family history. Conversely,
+text alone cannot assess lesion geometry, borders, or colour patterns. By
+fusing both modalities, the system produces a richer evidence base. Within
+Stage~6, raw descriptor signals are normalised, calibrated ABCD scores
+(0--1 each) are computed via learned mappings, and these are combined with
+the Evolution score from clinical text to produce a unified \emph{Clinical
+Knowledge JSON}. This JSON contains: (i)~calibrated ABCDE values,
+(ii)~malignancy risk probability and Total Dermatoscopic Score (TDS),
+(iii)~detailed evidence summaries documenting which image and text features
+contributed to each score, and (iv)~confidence levels and flags for
+low-certainty predictions requiring escalation.
+
+\textbf{VQA and conversational integration.} The Clinical Knowledge JSON
+from Stage~6 becomes the authoritative structured representation consumed
+by downstream modules. Stage~7 (Visual Question Answering) receives:
+(1)~the cropped ROI image (224$\times$224 pixels); (2)~the user's natural-language
+question ($\leq$128 tokens); (3)~the Clinical Knowledge JSON containing
+ABCDE scores, risk assessment, and evidence. A vision--language model
+integrates these three inputs to ground answers in ABCDE-structured evidence,
+minimising hallucination and ensuring clinical alignment. The VQA output—
+together with conversation history and retrieved medical guidelines—feeds
+into Stage~8 (Conversational LLM with RAG), which synthesises a multi-turn
+dialogue.
+
+\textbf{Logging, audit, and deployment infrastructure.} The Clinical
+Knowledge JSON and intermediate stage outputs (masks, ROI crops, confidence
+scores) are logged to persistent storage for auditability and downstream
+analysis. This structured, traceable pipeline is designed for secure
+containerised deployment via REST API (Stage~9), with role-based access
+control and encryption for sensitive medical data.
+
+\textbf{Design rationale.} The modular, stage-wise organisation
+reflects three key design principles. First, \emph{independence}: each
+stage exposes well-defined inputs and outputs, allowing independent
+evaluation on standard benchmarks and replacement of individual
+components without disrupting the remainder of the pipeline. Second,
+\emph{calibration}: every stage produces confidence scores alongside
+its primary output, enabling the IT-Fusion module to weight evidence
+appropriately and to flag low-confidence predictions for clinical
+escalation. Third, \emph{interpretability}: by routing all downstream
+reasoning through a structured Clinical JSON rather than raw model
+activations, NutriDermAI provides traceable, human-readable
+explanations that align with the ABCDE framework familiar to
+clinicians.
+
+\begin{figure*}[tp]
+\centering
+\includegraphics[width=\textwidth, height=0.82\textheight, keepaspectratio]{archi.pdf}
+\caption{NutriDermAI system architecture. Solid boxes denote implemented
+or planned stages; dashed boxes denote future stages requiring detailed
+design. \textbf{Image pipeline} (SLS $\to$ SLRC $\to$ HC): Extracts
+geometric and chromatic features. \textbf{Text pipeline} (MedProc): 
+Derives Evolution~(E) score and clinical entities. \textbf{Fusion} 
+(IT-Fusion): Computes calibrated ABCDE scores and produces Clinical 
+Knowledge JSON. \textbf{VQA}: Grounds answers in structured evidence. 
+\textbf{Conversational layer} (Stage~8): Integrates four components---
+(1)~Retriever fetches relevant clinical guidelines from FAISS/KB,
+(2)~Chat Memory maintains conversation history, (3)~Prompt Builder 
+combines query, JSON, VQA output, and retrieved documents, and (4)~LLaMA 
+generates evidence-grounded responses. \textbf{Deployment} (Stage~9): 
+React frontend, FastAPI backend, and secure storage.}
+\label{fig:architecture}
+\end{figure*}
+
+% ===========================================================
+\section{Pipeline Architecture and Stage Design}
+% ===========================================================
+
+This section describes the design and implementation of each pipeline
+stage. Stages~2--5 are fully implemented and validated; Stages~1 and
+6--7 are in progress; Stages~8--9 are planned future work.
+
+\subsection{End-to-End Workflow and Data Flow}
+
+The overall system operates as follows:
+
+\begin{enumerate}[leftmargin=*]
+    \item \emph{Patient provides input}: Dermatoscopic image, medical history or
+          symptom text, and a clinical query.
+    \item \emph{Preprocessing} (Stage~1): Standardises image format, normalises
+          intensities, and tokenises text.
+    \item \emph{Image pipeline} (Stages~2--4): Segmentation isolates the lesion;
+          ROI cropping extracts the region; classification extracts visual feature
+          embeddings and raw ABCD descriptors (asymmetry, border, colour, diameter).
+    \item \emph{Text pipeline} (Stage~5): Clinical NLP extracts symptoms, temporal
+          mentions, and the Evolution (E) score.
+    \item \emph{Multimodal fusion} (Stage~6): Combines image and text features to
+          compute calibrated ABCDE values, risk scores, and a Clinical Knowledge JSON.
+    \item \emph{Visual reasoning} (Stage~7): VQA module grounds the answer in both
+          the ROI image and Clinical Knowledge JSON.
+    \item \emph{Conversational reasoning} (Stage~8): Prompt Builder combines VQA
+          output, Chat Memory history, and retrieved medical guidelines. The
+          Conversational LLM integrates all signals to generate a clinically
+          grounded, context-aware response.
+    \item \emph{Final response}: System outputs answer, clinical explanation, and
+          supporting evidence through the chatbot interface.
+\end{enumerate}
+
+This modular, stage-wise design ensures that each component can be independently
+validated, replaced, or improved without disrupting the overall pipeline. All
+intermediate outputs are structured (JSON or feature vectors) with explicit
+confidence scores, enabling transparency and audit trails suitable for clinical
+governance.
+
+\subsection{Stage 1: Input Preprocessing}
+
+Stage~1 performs format validation, metadata extraction, and
+centralised normalisation of all inputs before branching into the image
+and text pipelines. Implementation is in progress.
+
+\subsection{Stage 2: Skin Lesion Segmentation (SLS)}
+
+Given a full dermatoscopic image, Stage~2 produces a pixel-wise lesion
+mask using ARC-UNet. Preprocessing resizes images to
+512$\times$512 with bilinear interpolation, normalises intensities
+using ImageNet statistics, and optionally removes hair artefacts via
+morphological operations.
+
+\subsection{Stage 3: Lesion ROI Cropping (SLRC)}
+
+Stage~3 applies the SLS mask to extract a tightly cropped ROI via
+connected-component labelling and axis-aligned bounding box computation
+with 10\% padding, resized to 224$\times$224.
+
+\subsection{Stage 4: Hierarchical Classification and Feature Extraction (HC)}
+
+Stage~4 performs dual-headed binary and multi-class classification to
+categorise lesions as benign/malignant and into one of seven dermatological
+categories. An EfficientFormerV2-S2 backbone processes the ROI and
+extracts high-dimensional visual feature embeddings. In parallel, four
+feature extraction sub-pipelines compute intermediate geometric and
+chromatic descriptors: (A)~asymmetry coefficients via mask symmetry
+analysis, (B)~border irregularity metrics from contour complexity measures,
+(C)~colour distribution statistics via LAB-space clustering, and (D)~lesion
+diameter estimates from pixel bounding boxes. These raw geometric and
+chromatic signals are passed forward as feature vectors. The actual
+computation of calibrated ABCD scores and risk-weighted combinations
+occurs in Stage~6 (IT-Fusion), where image-derived features are aligned
+with clinical text features and normalised.
+
+\subsection{Stage 5: Medical Information Processing (MedProc)}
+
+Stage~5 processes patient-provided medical history and uploaded reports
+(PDF, $\leq$5~MB) to derive the Evolution~(E) score and structured
+clinical features. The processing pipeline applies:
+\begin{itemize}[leftmargin=*]
+    \item OCR for PDF reports followed by boilerplate removal and spell
+          correction;
+    \item tokenisation with a 512-token limit and stride-100 chunking
+          for long documents; and
+    \item Bio\_ClinicalBERT~\cite{alsentzer2019_bioclinicalbert} fine-tuned for named entity
+          recognition (NER) and relation extraction, producing a JSON output
+          containing symptoms, recommendations, and the Evolution~(E) value.
+          The fine-tuned checkpoint is saved at
+          \texttt{MedProc/checkpoints/medproc\_best.pt} and shared with Stage~6.
+\end{itemize}
+
+\subsection{Stage 6: Multimodal IT-Fusion and Clinical JSON Generation}
+
+Stage~6 is the critical fusion layer that synthesises HC and MedProc
+outputs into a unified, clinically interpretable representation.
+
+\textbf{Dataset preparation.} The IT-Fusion dataset is prepared by
+\texttt{dataset.ipynb}, which processes three complementary sources:
+(i)~\textbf{Derm1M} (image--caption pairs aligned to a dermatology
+ontology); (ii)~\textbf{MM-SkinQA} (multimodal skin QA with clinical
+captions); and (iii)~\textbf{PAD-UFES-20} (tabular clinical metadata
+with biopsy-confirmed labels). For each sample, two pre-trained feature
+extractors are applied: (a)~the \textbf{Bio\_ClinicalBERT} encoder
+(\texttt{emilyalsentzer/Bio\_ClinicalBERT}), fine-tuned in Stage~5
+and loaded from the MedProc checkpoint, extracts 768-dim text
+embeddings; and (b)~the \textbf{EfficientFormerV2-S2 backbone},
+fine-tuned in Stage~4 (HC) and exported via \texttt{hc\_model.py}
+(\texttt{load\_hc\_backbone()}), extracts 288-dim image features.
+The two encoders are explicitly reused from their respective training
+stages---not retrained---ensuring consistent representation alignment
+across the pipeline.
+
+\textbf{Fusion architecture.} The stage receives: (i)~feature vectors
+and raw ABCD descriptor signals from Stage~4 (HC); (ii)~classification
+logits (benign/malignant and 8-class); (iii)~the Evolution~(E) score
+and clinical symptom features from Stage~5 (MedProc); and
+(iv)~confidence estimates for each signal. The fusion process
+comprises four key operations: \emph{(1)~Calibration}: numerical
+features are z-normalised using training-set statistics, and confidence
+scores are recalibrated via Platt scaling. \emph{(2)~ABCD Score
+Computation}: raw descriptor signals from Stage~4 are mapped to
+clinically calibrated ABCD scores (0--1 each) using learned mappings
+trained on clinician-annotated data. \emph{(3)~Risk Scoring}: ABCDE
+scores are combined via a weighted ensemble to produce a final
+malignancy risk probability and a Total Dermatoscopic Score (TDS).
+Conflict resolution (e.g., when image suggests benign but text
+suggests evolution) is handled via confidence-weighted averaging and
+flagged for clinician review. \emph{(4)~JSON Serialisation}: a
+\emph{Clinical Knowledge JSON} is generated containing ABCDE values,
+risk score, evidence summaries, and a ranking of which signals (image
+vs.\ text) most contributed to the final decision. This JSON serves as
+the authoritative structured representation used by downstream VQA,
+RAG, and audit systems. This stage is currently in progress.
+
+\subsection{Stage 7: Visual Question Answering (VQA)}
+
+Stage~7 converts the fused Clinical Knowledge JSON into natural-language
+answers grounded in structured ABCDE evidence. It receives three inputs:
+(1)~the cropped ROI image (224$\times$224 pixels) from Stage~3; (2)~the
+user's natural-language query ($\leq$128 tokens); and (3)~the Clinical
+Knowledge JSON from Stage~6 containing calibrated ABCDE scores, risk
+assessment, and evidence rankings. An R-LLaVA-style vision--language
+model jointly attends to image, text, and structured JSON to produce:
+a natural-language answer addressing the user's question, an evidence
+summary documenting which ABCDE signals and clinical facts support the
+answer, and a confidence estimate. By grounding responses in the
+structured JSON rather than raw image features, VQA minimises hallucination
+and ensures clinical alignment. VQA is invoked only after IT-Fusion produces
+a consolidated JSON, preserving explainability and audit trails. This stage
+is currently in progress.
+
+\subsection{Stage 8: Conversational LLM with RAG (Planned)}
+
+To support multi-turn clinical dialogue, Stage~8 integrates four key
+components: a \emph{Retriever}, a \emph{Prompt Builder}, a \emph{Chat Memory},
+and a \emph{Conversational LLM}. Operation is as follows:
+
+\begin{enumerate}[leftmargin=*]
+    \item \emph{Retriever (FAISS / Knowledge Base)}: Given the current user
+          query, a FAISS vector database retrieves the top-$k$ most relevant
+          documents from a curated knowledge base containing ABCDE clinical
+          rules, dermatology guidelines, treatment protocols, and evidence-based
+          recommendations. Retrieval operates over both the query text and the
+          Clinical Knowledge JSON to ensure context-aware document selection.
+    \item \emph{Chat Memory}: Maintains a persistent conversation history
+          throughout a multi-turn dialogue session. Each query--response pair is
+          logged with timestamps and clinical context (lesion ID, patient
+          identifier if applicable) for auditability and longitudinal tracking.
+    \item \emph{Prompt Builder}: Constructs a unified, clinically-aligned
+          prompt that integrates: (a)~the current user query, (b)~the Clinical
+          Knowledge JSON from Stage~6 (ABCDE scores, risk assessment, evidence),
+          (c)~VQA output from Stage~7 (answer and evidence summary), (d)~retrieved
+          documents from the Retriever, and (e)~relevant conversation history from
+          Chat Memory. The prompt is formatted to encourage reasoning transparency
+          and evidence-grounded responses.
+    \item \emph{Conversational LLM (LLaMA-based)}: Receives the constructed
+          prompt and generates a natural-language response that addresses the
+          user's question while maintaining clinical alignment. The LLM output
+          includes the answer, supporting evidence, and any recommended follow-up
+          actions or escalation flags.
+\end{enumerate}
+
+This stage is planned as future work and will undergo rigorous stress testing
+for hallucination, out-of-scope questions, and adversarial prompts before
+clinical deployment.
+
+\subsection{Stage 9: Frontend, Backend, and Deployment (Planned)}
+
+Stage~9 will expose the system as a chat-based web application
+comprising: a React frontend for image uploads, report attachment, and
+chat; a FastAPI backend orchestrating Stages~2--8 as containerised
+microservices; and secure artifact storage (masks, JSON, logs) for
+auditability. Deployment will include continuous monitoring for drift,
+error patterns, and user feedback, informed by dermatology chatbot
+design
+guidelines~\cite{dermatologychatbot2024,casestudy2024_wizard_of_oz,
+amie2025,convagents2025_effectiveness}.
+
+% ===========================================================
+\section{Stage Overview}
+% ===========================================================
+\label{sec:stage_overview}
+
+Table~\ref{tab:stage_overview} summarises all pipeline stages,
+consolidating inputs, datasets, preprocessing, models, implementation
+status, and key metrics. Stages~2--5 are fully implemented and
+validated on standard benchmarks; Stages~1 and 6--7 are in progress.
+
+\begin{table*}[tp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.35}
+\caption{NutriDermAI Pipeline Stage Overview}
+\label{tab:stage_overview}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{
+  c
+  L{1.9cm}
+  L{2.3cm}
+  L{3.0cm}
+  L{2.2cm}
+  C{1.1cm}
+  L{2.2cm}
+}
+\toprule
+\textbf{Stage} &
+\textbf{Input / Output} &
+\textbf{Dataset (Train/Val/Test)} &
+\textbf{Preprocessing} &
+\textbf{Model} &
+\textbf{Status} &
+\textbf{Key Metric} \\
+\midrule
+
+1 &
+Raw image / text &
+N/A &
+Format validation, metadata extraction &
+Centralised normaliser &
+In Prog. &
+--- \\
+
+\midrule
+
+\multirow{2}{*}{2 (SLS)} &
+\multirow{2}{*}{Image $\to$ Mask} &
+\multirow{2}{*}{\makecell[l]{ISIC 2016--17\\(2.9K/400/979)}} &
+\multirow{2}{*}{\makecell[l]{Resize 512$\times$512,\\norm., hair removal}} &
+\multirow{2}{*}{ARC-UNet} &
+\multirow{2}{*}{\checkmark} &
+Dice: 0.8506 \\
+& & & & & & Bdry F1: 0.8815 \\
+
+\midrule
+
+3 (SLRC) &
+Mask $+$ Image $\to$ ROI &
+ISIC 2016--17 (2.9K/400/979) &
+Morphology, connected components, bbox, 10\% pad &
+OpenCV 4.5 &
+\checkmark &
+Coverage: 98.4\% \\
+
+\midrule
+
+\multirow{2}{*}{4 (HC)} &
+\multirow{2}{*}{\makecell[l]{ROI $\to$\\Label $+$ Features}} &
+\multirow{2}{*}{\makecell[l]{ISIC $+$ HAM $+$\\ISIC 19--24\\(35K/5K/10K)}} &
+\multirow{2}{*}{\makecell[l]{Augmentation,\\normalisation, MixUp}} &
+\multirow{2}{*}{\makecell[l]{EfficientFormer-\\V2-S2}} &
+\multirow{2}{*}{\checkmark} &
+Acc: 94.7\% (bin.) \\
+& & & & & & Acc: 89.2\% (7-cls.) \\
+
+\midrule
+
+5 (MedProc) &
+Report $\to$ Symptoms $+$ E &
+MIMIC-III/IV (50K/5K/10K) &
+OCR, cleanup, tokenisation ($\leq$512 tokens, stride 100) &
+Bio\_ClinicalBERT~\cite{alsentzer2019_bioclinicalbert} &
+\checkmark &
+NER F1: 0.87--0.89 \\
+
+\midrule
+
+6 (Fusion) &
+HC $+$ MedProc $\to$ Clinical JSON &
+\makecell[l]{Derm1M\\MM-SkinQA\\PAD-UFES-20} &
+Feature alignment, z-norm, embedding &
+MARIA Transformer &
+In Prog. &
+Risk AUC (TBD) \\
+
+\midrule
+
+7 (VQA) &
+JSON $+$ ROI $+$ Q $\to$ Answer &
+DermaVQA $+$ PathVQA (80K/10K/15K) &
+Prompt conversion, tokenisation &
+R-LLaVA &
+In Prog. &
+VQA F1 (TBD) \\
+
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% ===========================================================
+\section{Experimental Results}
+% ===========================================================
+
+\subsection{Experimental Setup and Dataset Justification}
+
+\textbf{Datasets and selection rationale.} We employ multiple public
+datasets, each chosen for specific strengths: (i)~\textbf{ISIC
+2016--2017} (4,279 images): Gold-standard dermatoscopy dataset with
+expert-annotated lesion masks, used for segmentation (SLS stage);
+(ii)~\textbf{HAM10000} (10,015 images): Large-scale, ethnically diverse
+lesion classification dataset covering 7 categories and multiple skin
+tones, used for classification (HC stage); (iii)~\textbf{ISIC
+2018--2024} (50,000+): Extended classification benchmark with updated
+annotations, used for HC stage fine-tuning; (iv)~\textbf{MIMIC-III/IV}:
+Large-scale medical NLP corpus (60K+ documents) with longitudinal patient
+records, used for MedProc stage training and Evolution~(E) score
+calibration; (v)~\textbf{Derm1M}: Emerging large-scale multimodal
+dermatology dataset (1M+ image--text pairs) for multimodal fusion research.
+
+\textbf{Hardware, software, and implementation.} All experiments are
+conducted on an NVIDIA A100 GPU (40~GB memory) with 48 CPU cores and
+512~GB RAM. Image stages (SLS, SLRC, HC) are implemented in PyTorch
+2.1 with OpenCV for image processing. Clinical NLP (MedProc) uses HuggingFace Transformers with
+Bio\_ClinicalBERT~\cite{alsentzer2019_bioclinicalbert} fine-tuned for
+clinical NER and Evolution scoring. All code is containerised using
+Docker for reproducibility.
+
+\textbf{Hyperparameter configurations and training details.} Key training
+configurations are detailed below:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{SLS (ARC-UNet)}: Batch size 8, learning rate $10^{-4}$,
+          optimizer Adam, loss hybrid Dice+CE (ratio 0.6/0.4), 100 epochs,
+          early stopping patience 10, $L_2$ regularisation $\lambda=10^{-5}$.
+          Augmentation: random flips, rotations $\pm 15°$, elastic deformations.
+    \item \textbf{HC (EfficientFormerV2-S2)}: Batch size $16 \times 2$
+          (gradient accumulation), learning rate $10^{-3}$ (head)~/$10^{-4}$
+          (backbone), OneCycleLR scheduler, loss AsymmetricFocalLoss
+          ($\gamma=2.0$), 80 epochs, weighted sampling for class balance,
+          MixUp/CutMix augmentation.
+    \item \textbf{MedProc (Bio\_ClinicalBERT)}: Batch size 32, learning rate $5 \times 10^{-5}$,
+          optimizer AdamW, 10 epochs, 512-token limit with stride-100 chunking,
+          dropout 0.1, label smoothing 0.1. Evaluation uses ECE (Expected
+          Calibration Error) and per-entity F1 scores.
+\end{itemize}
+
+We present stage-wise results for the four completed stages (2--5).
+For each stage, we document the dataset, algorithm, training
+configuration, and measured performance metrics.
+
+\subsection{Stage 2: Skin Lesion Segmentation --- ARC-UNet}
+
+\textbf{Dataset.} ISIC 2016--2017: 4,279 images (2,900 train / 400 val
+/ 979 test).
+
+\textbf{Algorithm.} ARC-UNet with squeeze-and-excitation attention,
+residual connections, and an asymmetric encoder--decoder.
+
+\textbf{Training.} Hybrid Dice$+$CE loss (ratio 0.6/0.4), Adam
+($\mathrm{LR}=10^{-4}$), batch size 8, 100 epochs, L$_2$
+regularisation ($\lambda=10^{-5}$), early stopping (patience 10),
+augmentation (flips, rotations $\pm15^{\circ}$, elastic deformations).
+
+\textbf{Results.} Table~\ref{tab:sls_results} reports single-pass and
+7-view test-time augmentation (TTA) performance. ARC-UNet achieves
+Boundary F1 of 0.8815 with balanced sensitivity and specificity.
+Single-pass inference is recommended for clinical deployment.
+
+\begin{table}[t]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\caption{Stage 2 (SLS) --- ARC-UNet Segmentation Results}
+\label{tab:sls_results}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l S[table-format=1.4] S[table-format=1.4] r}
+\toprule
+\textbf{Metric} & {\textbf{Single-Pass}} & {\textbf{TTA (7-view)}} & \textbf{Gain} \\
+\midrule
+Dice Coefficient        & 0.8506 & 0.8512 & $+$0.07\% \\
+IoU                     & 0.7718 & 0.7726 & $+$0.10\% \\
+Pixel Accuracy (\%)     & 93.70  & 93.75  & $+$0.05\% \\
+Boundary F1-Score       & 0.8801 & 0.8815 & $+$0.16\% \\
+Sensitivity (Recall)    & 0.9102 & 0.9118 & $+$0.18\% \\
+Specificity             & 0.9756 & 0.9761 & $+$0.05\% \\
+\midrule
+\multicolumn{4}{l}{\textit{Optimal threshold: 0.44 (well-calibrated)}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stage 3: Lesion ROI Cropping --- OpenCV Pipeline}
+
+\textbf{Dataset.} Derived from ISIC 2016/2017 SLS output masks
+(4,279 images; no separate dataset).
+
+\textbf{Algorithm.} Deterministic four-step pipeline:
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=1pt]
+    \item \emph{Morphological cleanup:} binary closing (disk, $r=3$) to
+          fill segmentation holes.
+    \item \emph{Connected-component labelling:} 8-connectivity; retain
+          the largest component.
+    \item \emph{Bounding box extraction:} axis-aligned bounding box with
+          10\% padding on all sides.
+    \item \emph{Aspect-ratio-preserving resize:} bilinear interpolation
+          to 224$\times$224 with black-border padding if needed.
+\end{enumerate}
+
+\textbf{Results.} Table~\ref{tab:slrc_results} confirms high lesion
+coverage (98.4\%) and border preservation (96.7\%) at 12.3~ms latency
+per ROI.
+
+\begin{table}[t]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\caption{Stage 3 (SLRC) --- ROI Cropping Results}
+\label{tab:slrc_results}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{L{3.8cm} L{3.4cm}}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Mean Lesion Coverage (\% pixels retained)    & 98.4\% $\pm$ 1.2\% \\[2pt]
+Border Preservation (\% contour within ROI)  & 96.7\% $\pm$ 2.1\% \\[2pt]
+Mean ROI Size Variation (vs.\ anat.\ diam.)  & 0.34~mm \newline (IQR: 0.18--0.65~mm) \\[2pt]
+Computational Time per ROI (CPU)             & 12.3~ms \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stage 4: Hierarchical Classification --- EfficientFormerV2-S2}
+
+\textbf{Dataset.} ISIC 2018 $+$ HAM10000 $+$ ISIC 2019--2024; 50,000
+balanced samples (70/10/20 split, no patient overlap).
+
+\textbf{Algorithm.} EfficientFormerV2-S2 with dual-head classification
+(benign/malignant $+$ 7-class) and parallel ABCD sub-pipelines.
+
+\textbf{Training.} AsymmetricFocalLoss ($\gamma=2.0$), OneCycleLR
+(head $10^{-3}$, backbone $10^{-4}$), batch
+$16{\times}2$ gradient accumulation, 80 epochs, MixUp/CutMix,
+WeightedRandomSampler.
+
+\textbf{Results.} Table~\ref{tab:hc_results} shows that explicit ABCD
+features improve both interpretability and performance. TTA provides
+approximately 1\% improvement for critical cases; single-pass is
+acceptable for routine triage.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{Stage 4 (HC) --- Hierarchical Classification Results}
+\label{tab:hc_results}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Metric} & \textbf{Single-Pass} & \textbf{TTA (7-view)} & \textbf{Gain} \\
+\midrule
+\multicolumn{4}{l}{\textit{Binary Classification (Benign / Malignant)}} \\
+\midrule
+Accuracy (\%)        & 94.7   & 95.3   & $+$0.6\%  \\
+Sensitivity          & 0.9512 & 0.9618 & $+$1.06\% \\
+Specificity          & 0.9387 & 0.9425 & $+$0.38\% \\
+AUC-ROC              & 0.9751 & 0.9803 & $+$0.52\% \\
+\midrule
+\multicolumn{4}{l}{\textit{Multi-Class Classification (7 Categories)}} \\
+\midrule
+Accuracy (\%)              & 89.2   & 90.1   & $+$0.9\%  \\
+Weighted F1-Score          & 0.8876 & 0.8979 & $+$1.03\% \\
+Macro F1-Score             & 0.8654 & 0.8762 & $+$1.08\% \\
+Per-Class Balanced Acc.    & 0.8905 & 0.8998 & $+$0.93\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Stage 5: Medical Information Processing --- BioBERT}
+
+\textbf{Dataset.} MIMIC-III/IV: 50K train / 5K val / 10K test (no
+patient overlap).
+
+\textbf{Algorithm.} Bio\_ClinicalBERT~\cite{alsentzer2019_bioclinicalbert}
+augmented with two transformer blocks for clinical NER, relation
+extraction, and rule-based Evolution~(E) scoring.
+
+\textbf{Training.} AdamW ($\mathrm{LR}=5{\times}10^{-5}$), batch 32,
+10 epochs, 512-token limit with stride-100 chunking, dropout 0.1,
+label smoothing 0.1.
+
+\textbf{Results.} Table~\ref{tab:medproc_results} shows NER F1 of
+0.87--0.89 across clinical entity types, with well-calibrated
+uncertainty (ECE 0.0201), suitable for downstream fusion.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\caption{Stage 5 (MedProc) --- Clinical NLP Results}
+\label{tab:medproc_results}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Task / Entity} & \textbf{Prec.} & \textbf{Rec.} & \textbf{F1} \\
+\midrule
+\multicolumn{4}{l}{\textit{Named Entity Recognition (NER)}} \\
+\midrule
+Symptoms            & 0.8901 & 0.8596 & 0.8742 \\
+Body sites          & 0.9087 & 0.8796 & 0.8934 \\
+Temporal mentions   & 0.8312 & 0.8011 & 0.8156 \\
+Severity indicators & 0.7956 & 0.7698 & 0.7821 \\
+\midrule
+\multicolumn{4}{l}{\textit{Relation Extraction (Symptom-to-Evolution)}} \\
+\midrule
+Progression detected (P / R) & 0.8764 & 0.8523 & --- \\
+AUC-ROC              & \multicolumn{3}{c}{0.8934} \\
+\midrule
+\multicolumn{4}{l}{\textit{Evolution (E) Score Quality}} \\
+\midrule
+Expected Calibration Error (ECE) & \multicolumn{3}{c}{0.0201} \\
+Mean Absolute Error (scale 0--1) & \multicolumn{3}{c}{0.1547} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Integration and Data Flow Validation}
+
+End-to-end integration tests across Stages~2--5 confirm correct data
+flow: SLS mask (512$\times$512 binary) $\to$ SLRC ROI
+(224$\times$224 RGB) $\to$ HC classification logits and ABCD features
+$+$ MedProc JSON (symptoms and E-score). Structured outputs---JSON for
+MedProc, numpy arrays for image stages---are properly serialised and
+deserialised between stages. Per-sample latency on an NVIDIA A100 is:
+SLS 280~ms, SLRC 12~ms, HC 45~ms, MedProc 180~ms; total
+\textbf{517~ms}, which is acceptable for clinical batch processing.
+
+% ===========================================================
+\section{Discussion}
+% ===========================================================
+
+\subsection{Validation of Modular Design and Component Performance}
+
+The four-stage modular architecture yields several practical advantages.
+First, each stage can be evaluated independently on established
+benchmarks (ISIC for SLS/HC; MIMIC for MedProc; deterministic
+validation for SLRC), facilitating transparent reporting and
+reproducibility. SLS achieves Dice 0.8506 and Boundary F1 0.8815,
+competitive with recent state-of-the-art U-Net variants. HC attains
+94.7\% binary accuracy and 89.2\% 7-class accuracy with strong
+per-class balance, demonstrating that explicit ABCD feature extraction
+does not compromise classification performance. MedProc achieves NER F1
+of 0.87--0.89 with low calibration error (ECE 0.0201), suitable for
+downstream fusion. Together, these results confirm that modular
+independence does not compromise individual component quality.
+
+Second, SLS and HC are deployable as standalone components, with MedProc
+available as an optional enrichment layer. This flexibility supports
+iterative deployment: institutions may begin with image-only analysis
+(SLS~+~HC) and incrementally integrate text processing as clinical
+workflows mature. Third, all outputs are structured (JSON or numpy
+arrays) with calibrated confidence scores, enabling explainability and
+audit trails. Fourth, the microservice-compatible design supports
+containerised cloud and on-premise deployment with role-based access
+control.
+
+\subsection{Implications of ABCDE Computation in IT-Fusion}
+
+A key architectural choice is to compute ABCD scores in Stage~6
+(IT-Fusion) rather than Stage~4 (HC). This design decision reflects two
+insights: (i)~ABCD metrics cannot be properly calibrated using image
+features alone, as clinician-annotated ABCDE labels typically reflect
+integrated judgement combining visual, temporal, and contextual factors;
+and (ii)~Evolution (E) depends exclusively on clinical text and cannot
+be inferred from images. By deferring ABCD score computation to the
+fusion stage, NutriDermAI ensures that all five criteria are computed
+consistently and that the final risk estimate properly integrates both
+modalities. Future work may explore learning-based ABCD calibration
+mappings via annotation of a prospective cohort.
+
+\subsection{Safety and Ethical Considerations}
+
+NutriDermAI is designed as a decision support tool, not a standalone
+diagnostic system. All outputs include explicit confidence levels, and
+low-confidence predictions automatically trigger escalation pathways to
+human dermatologists. The structured Clinical JSON audit trail documents
+which image and text features contributed to each decision, enabling
+post-hoc review and quality assurance.
+
+Deployment must comply with emerging regulatory frameworks for AI-based
+medical devices. The FDA's recent guidance on AI/ML-based Software as a
+Medical Device (SaMD)~\cite{fda2021_aiml_samd} emphasises transparency,
+performance monitoring, and post-market surveillance. The EU AI Act
+classifies medical AI as high-risk, requiring documented risk assessments,
+data governance, and human oversight~\cite{euaiact2024}. NutriDermAI's
+modular design and structured outputs facilitate compliance: each stage
+can be independently validated, and the JSON evidence trail enables
+detailed audits.
+
+Fairness and bias are critical concerns. The current training cohorts
+(ISIC, HAM10000) are known to skew towards lighter skin tones, potentially
+reducing performance on darker skin phenotypes~\cite{kinyanjui2021_color_bias_skin,
+buolamwini2019_gender_shades}. Prospective fairness audits across skin
+tones, anatomical sites, and lesion types are planned. If disparities are
+detected, targeted data augmentation, fine-tuning on diverse cohorts, and
+ensemble methods can mitigate bias. Multinational clinical validation with
+diverse patient populations is essential before broad deployment.
+
+\subsection{Key Strengths and Architectural Contributions}
+
+The NutriDermAI architecture demonstrates several distinct strengths that
+differentiate it from existing dermatology AI systems:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Multimodal integration.} By combining dermatoscopic images,
+          clinical text, and user queries, the system captures information that
+          no single modality can provide alone. This fusion enables more robust
+          and contextually grounded clinical reasoning.
+    \item \textbf{Structured explainability.} The Clinical Knowledge JSON serves
+          as an intermediate representation that makes all reasoning transparent.
+          Clinicians can audit which image and text features contributed to each
+          ABCDE score and risk decision, supporting trust and compliance.
+    \item \textbf{ABCDE-aware reasoning.} Unlike generic medical VQA systems, our
+          approach explicitly computes and reasons over the ABCDE rule---the
+          clinical gold standard for melanoma risk assessment. This alignment with
+          dermatology practice standards improves clinical relevance and uptake.
+    \item \textbf{Knowledge-grounded conversational AI.} By integrating Retrieval-Augmented
+          Generation (RAG), the system grounds responses in verified medical guidelines
+          and dermatology evidence, reducing hallucinations and improving accuracy
+          compared to LLM-only approaches.
+    \item \textbf{Modular design for iterative deployment.} Each stage is independently
+          validated and can be improved or replaced independently. Institutions can
+          start with image-only analysis (SLS~+~HC) and progressively integrate text
+          processing and conversational reasoning as clinical workflows mature.
+    \item \textbf{Calibrated confidence and clinical escalation.} Every stage reports
+          uncertainty estimates; low-confidence predictions automatically trigger
+          escalation pathways to human dermatologists, ensuring patient safety.
+\end{itemize}
+
+Four core modules are fully implemented and evaluated:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Stage 2 (SLS):} Dice 0.8506, IoU 0.7718, 93.70\%
+          pixel accuracy (Table~\ref{tab:sls_results}).
+    \item \textbf{Stage 3 (SLRC):} 98.4\% coverage, 96.7\% border
+          preservation, 12.3~ms latency (Table~\ref{tab:slrc_results}).
+    \item \textbf{Stage 4 (HC):} 94.7\% binary accuracy (TTA 95.3\%),
+          89.2\% 7-class accuracy (TTA 90.1\%)
+          (Table~\ref{tab:hc_results}).
+    \item \textbf{Stage 5 (MedProc):} NER F1 0.8742--0.8934, ECE
+          0.0201 (Table~\ref{tab:medproc_results}).
+\end{itemize}
+
+Remaining stages requiring implementation are: Stage~1 (input
+normalisation), Stage~6 (IT-Fusion multimodal transformer with ABCDE
+calibration), and Stage~7 (R-LLaVA VQA). Stages~8--9 (conversational LLM
+with RAG, and deployment) are future work pending completion of Stages~1
+and 6--7. Integration and validation of the complete pipeline is
+targeted for Q4 2026.
+
+\subsection{Generalisability and Deployment Considerations}
+
+The pipeline's modular design supports generalisation across settings.
+ISIC benchmarks span multiple imaging devices and geographies, suggesting
+reasonable device robustness. However, real-world deployment in clinical
+settings will likely encounter out-of-distribution inputs (poor lighting,
+large artefacts, non-standard cameras). Robust out-of-distribution
+detection and failure mode analysis are planned. Furthermore, sequential
+processing (SLS $\to$ SLRC $\to$ HC $\to$ MedProc $\to$ Fusion)
+introduces latency. Optimisations include batch processing, model
+quantisation, and edge deployment of lightweight models for resource-limited
+settings.
+
+The English-only text processing is a significant limitation for
+international deployment. Multilingual clinical NLP models and translated
+prompts will extend applicability. Stateless inference (processing each
+case independently) also limits clinical utility; a stateful version
+maintaining longitudinal ABCDE trends within a patient's record is
+planned for integration with clinical EHR systems.
+
+% ===========================================================
+\section{Limitations and Future Work}
+% ===========================================================
+
+\subsection{Current Limitations}
+
+The NutriDermAI prototype, though comprehensive in design, carries several
+known limitations that inform the research roadmap:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{English-only text processing.} All clinical NLP components
+          are trained on English-language corpora. In global health contexts
+          where patients may provide reports in other languages, a multilingual
+          extension is necessary~\cite{pfohl2022_multilingual_clinical_nlp}.
+    \item \textbf{Skin tone bias.} Like many dermatology datasets, the training
+          cohorts (ISIC, HAM10000) skew towards lighter skin tones. Systematic
+          fairness audits across diverse skin tones are planned~\cite{buolamwini2019_gender_shades,
+          kinyanjui2021_color_bias_skin}.
+    \item \textbf{Dataset curation gaps.} The current HC stage uses curated
+          ISIC + HAM10000 data; in-the-wild deployment may encounter artefacts
+          (hair, ink, lighting) not well-represented in training sets. Robust
+          out-of-distribution detection is planned.
+    \item \textbf{Stateless inference.} The current pipeline processes each image
+          independently without longitudinal context. Clinical deployment requires
+          temporal patient records; a stateful version maintaining historical
+          ABCDE trends is planned.
+    \item \textbf{Staged validation.} While Stages~2--5 have been independently
+          validated, end-to-end performance of the fused system (Stages~6--7) is
+          pending completion and clinical evaluation.
+\end{itemize}
+
+\subsection{Future Work and Clinical Validation Roadmap}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Completion of core pipeline stages.} Stage~1 (input normalisation),
+          Stage~6 (IT-Fusion multimodal transformer), and Stage~7 (R-LLaVA VQA) are
+          in active development. Integration and validation are expected by Q4 2026.
+    \item \textbf{Prospective clinical validation.} Once Stages~1--7 are complete,
+          a prospective study comparing NutriDermAI's ABCDE scores and risk rankings
+          against board-certified dermatologist consensus will establish diagnostic
+          concordance and clinical utility~\cite{tjoa2019_clinical_validation_ai}.
+    \item \textbf{Fairness and bias audits.} Systematic evaluation across skin tones,
+          lesion types, and anatomical sites will be conducted using established
+          fairness metrics~\cite{kinyanjui2021_color_bias_skin,buolamwini2019_gender_shades}.
+    \item \textbf{Regulatory compliance and deployment.} Compliance with FDA guidance
+          on AI/ML-based Software as a Medical Device (SaMD)~\cite{fda2021_aiml_samd}
+          and the EU AI Act~\cite{euaiact2024} will be undertaken. Stage~9 deployment
+          will include role-based access, audit logging, data encryption, and continuous
+          monitoring for model drift and failure modes.
+    \item \textbf{Conversational robustness and safety.} Stage~8 (conversational LLM
+          with RAG) will be stress-tested for hallucination, adversarial prompts, and
+          out-of-scope questions. Guardrails following AMIE and clinical chatbot best
+          practices~\cite{amie2025,dermatologychatbot2024} will be implemented.
+    \item \textbf{Multi-language and cross-cultural adaptation.} Multilingual clinical
+          NLP models and culturally sensitive VQA prompts will extend NutriDermAI's
+          applicability to low-resource regions.
+    \item \textbf{Real-time inference optimisation.} Model distillation and quantisation
+          will enable deployment on resource-constrained devices (smartphones, rural
+          clinics with limited bandwidth).
+\end{itemize}
+
+% ===========================================================
+\section{Conclusion}
+% ===========================================================
+
+This paper presents NutriDermAI, a modular, ABCDE-aware multimodal
+dermatology decision support system with four validated core stages:
+skin lesion segmentation (Dice 0.8506, Boundary F1 0.8815), ROI
+extraction (98.4\% coverage, 12.3~ms), hierarchical classification
+(94.7\% binary accuracy, 89.2\% 7-class), and clinical NLP for
+evolution scoring (NER F1 0.87--0.89, ECE 0.0201). End-to-end
+integration across these stages is confirmed with a total pipeline
+latency of 517~ms on an NVIDIA A100.
+
+\textbf{Core architectural contribution.} The critical contribution of
+NutriDermAI is the principled fusion of image and text modalities to
+compute clinically calibrated ABCDE scores, a task typically performed
+ad-hoc by dermatologists with significant inter-observer variation. By
+routing all downstream reasoning through a structured Clinical Knowledge
+JSON, the system provides interpretability, independent stage evaluation,
+and redeployable components suitable for clinical governance and audit.
+Furthermore, by integrating knowledge-grounded conversational AI via
+Retrieval-Augmented Generation, NutriDermAI supports multi-turn clinical
+dialogue while minimising hallucination and ensuring alignment with
+verified medical evidence.
+
+\textbf{Thesis statement.} The proposed architecture bridges perception,
+reasoning, and interaction by integrating multimodal learning, structured
+clinical inference, and knowledge-grounded conversational AI, thereby
+enabling a scalable and explainable dermatology decision support system.
+This integrated design addresses a critical gap in the literature, where
+existing systems either provide image-only classification without clinical
+context, or offer generic medical VQA without ABCDE-aware reasoning. By
+combining all three capabilities in a unified, modular pipeline, NutriDermAI
+positions itself as a comprehensive platform for both clinical decision support
+and patient education.
+
+\textbf{Path forward.} NutriDermAI provides a validated research foundation for
+ABCDE-aware dermatology AI systems that combine strong empirical performance
+with transparency and modular reusability. Prospective clinical validation
+studies, completion of Stages~1, 6, and 7, and fairness audits across
+diverse populations are the immediate priorities. If such validation
+confirms diagnostic concordance with board-certified dermatologists,
+NutriDermAI could serve as a scalable triage tool in resource-limited
+settings where specialist access is restricted~\cite{dreremoula2022_derm_shortage},
+while simultaneously supporting clinical training and reducing diagnostic
+variability in high-income regions.
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,8 @@
+TEST RESULTS
+Threshold: 0.44
+Dice single-pass: 0.850562
+Dice TTA: 0.850245
+IoU single-pass: 0.771771
+IoU TTA: 0.771372
+Accuracy single-pass: 0.936979
+Accuracy TTA: 0.936894

@@ -1,0 +1,25 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.2.4">
+  <diagram name="Page-1" id="unique-diagram-id">
+    <mxGraphModel dx="1360" dy="799" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EX5XkZQSaed81NLPggZn-8" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="EX5XkZQSaed81NLPggZn-7" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="3" parent="1" style="whiteSpace=wrap;html=1;fillColor=default;strokeColor=default;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;Input: Raw Image / PDF / Text&lt;br&gt;Task: Cleaning + Formatting&lt;br&gt;- Image resize/normalize&lt;br&gt;- OCR for PDFs&lt;br&gt;- Text cleanup&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="160" x="375" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="EX5XkZQSaed81NLPggZn-6" edge="1" parent="1" source="3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EX5XkZQSaed81NLPggZn-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=default;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;Output: Clean Text / OCR (PDF) /&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;font-size: 11px;&quot;&gt;Image (Resized/ Normalized)&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="395" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="EX5XkZQSaed81NLPggZn-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillOpacity=0;" value="" vertex="1">
+          <mxGeometry height="320" width="190" x="360" y="130" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

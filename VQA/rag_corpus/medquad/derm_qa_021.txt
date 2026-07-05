@@ -1,0 +1,2 @@
+Q: What is immunotherapy for skin cancer?
+A: Immune checkpoint inhibitors block PD-1 (pembrolizumab, nivolumab) or CTLA-4 (ipilimumab), restoring T-cell mediated tumour killing. Approved for: advanced melanoma (first-line and adjuvant), advanced SCC (cemiplimab), Merkel cell carcinoma. Combination ipilimumab + nivolumab achieves 5-year survival of ~52% in advanced melanoma. Immune-related adverse events can affect any organ system.

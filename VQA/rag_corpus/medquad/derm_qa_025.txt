@@ -1,0 +1,2 @@
+Q: How is dermoscopy used in clinical practice?
+A: Dermoscopy uses polarised or immersion light to visualise subsurface structures invisible to the naked eye. Improves melanoma detection sensitivity from 71% to 90% and specificity from 81% to 90% vs naked-eye examination. Key structures: pigment network, aggregated globules, streaks/pseudopods, regression structures, milia-like cysts, and vascular patterns. Algorithms: ABCD rule, 7-point checklist, Menzies method.

@@ -1,0 +1,22 @@
+# MedProc - Medical Information Processing Pipeline
+# Requirements for medproc_full_pipeline.ipynb
+
+# Core ML/DL Framework
+torch>=2.0.0
+transformers>=4.30.0
+
+# Distributed Data Processing
+dask>=2023.7.0
+dask[dataframe]
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Utilities
+tqdm>=4.65.0
+pathlib (built-in, no install needed)
+
+# Optional: For advanced NLP processing
+scikit-learn>=1.3.0
+spacy>=3.5.0

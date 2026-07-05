@@ -1,0 +1,73 @@
+_target_: CMC_utils.datasets.ClassificationDataset # DO NOT CHANGE
+_convert_: all # DO NOT CHANGE
+
+name: ADNI_diagnosis_biospecimen_${oc.select:target_spec, binary} # Name of the dataset
+db_type: tabular # DO NOT CHANGE
+target_classes:
+  binary: [ CN, AD ] # List of the binary classes
+  multiclass: [ CN, EMCI, LMCI, AD ] # List of the multiclass classes
+classes: ${.target_classes.${oc.select:target_spec, binary}} # List of the classes
+label_type: multiclass # multiclass or binary
+
+task: classification # DO NOT CHANGE
+
+path: ${data_path}/tabular/classification/ADNI_diagnosis/${oc.select:target_spec, binary}/biospecimen.csv # Relative path to the file
+
+columns: # Dictionary containing features names as keys and their types as values # DO NOT REMOVE
+    RID: id
+    ABETA: float
+    APGEN1: float
+    APGEN2: float
+    APOE4: float
+    APVOLUME: float
+    AXT117: float
+    BAT126: float
+    HMT10: float
+    HMT100: float
+    HMT102: float
+    HMT11: float
+    HMT12: float
+    HMT13: float
+    HMT15: float
+    HMT16: float
+    HMT17: float
+    HMT18: float
+    HMT19: float
+    HMT2: float
+    HMT3: float
+    HMT4: float
+    HMT40: float
+    HMT7: float
+    HMT8: float
+    HMT9: float
+    PTAU_ADNIMERGE: float
+    PTAU_UPENNBIOMK: float
+    RCT1: float
+    RCT11: float
+    RCT12: float
+    RCT13: float
+    RCT14: float
+    RCT1407: float
+    RCT1408: float
+    RCT183: float
+    RCT19: float
+    RCT20: float
+    RCT29: float
+    RCT3: float
+    RCT392: float
+    RCT4: float
+    RCT5: float
+    RCT6: float
+    RCT8: float
+    RCT9: float
+    TAU_ADNIMERGE: float
+    TAU_UPENNBIOMK: float
+    # Other features to be inserted
+    DX_bl: target  # DO NOT CHANGE THE VALUE, NAME CORRECTLY THE TARGET VARIABLE
+
+pandas_load_kwargs:
+  header: 0
+
+dataset_class: # DO NOT CHANGE
+  _target_: CMC_utils.datasets.SupervisedTabularDatasetTorch # DO NOT CHANGE
+  _convert_: all # DO NOT CHANGE

@@ -1,0 +1,2 @@
+Q: What is the difference between ABCDE and ABCD dermoscopy?
+A: Clinical ABCDE rule (Asymmetry, Border, Color, Diameter, Evolution) is used by naked eye for patient self-examination and general screening. The dermoscopic ABCD rule (Asymmetry, Border, Color, Dermoscopic structures) is a quantitative scoring system producing a Total Dermoscopic Score. Both systems complement each other: ABCDE for initial detection, dermoscopic ABCD for quantitative risk stratification.

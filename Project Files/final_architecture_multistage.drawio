@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-05T00:00:00.000Z" agent="Python" etag="final" version="20.0.1" type="device">
+  <!-- Full Architecture Diagram -->
+  <diagram id="full_arch" name="Full Architecture">
+    <mxGraphModel dx="1249" dy="835" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="n_patient" value="Patient\n(Image / Text / Reports)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#263238;strokeColor=#ffffff;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="180" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_frontend" value="Frontend\n(Chatbot UI / Uploads)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37474F;strokeColor=#90CAF9;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="260" y="40" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_backend" value="Backend\n(API Orchestrator)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#37474F;strokeColor=#A5D6A7;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="520" y="40" width="220" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_db" value="Database\n(Logs & Results)" style="shape=cylinder;whiteSpace=wrap;html=1;fillColor=#263238;strokeColor=#FFB74D;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="820" y="40" width="180" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Pipeline stages top row -->
+        <mxCell id="n_preproc" value="Stage 1\nPreprocessing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#212121;strokeColor=#8E24AA;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="140" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_sls" value="Stage 2\nSLS (Segmentation)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B5E20;strokeColor=#A5D6A7;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="280" y="140" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_slrc" value="Stage 3\nSLRC (ROI Crop)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D47A1;strokeColor=#90CAF9;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="520" y="140" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_hc" value="Stage 4\nHC (Classification + A/B/C/D)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF6F00;strokeColor=#FFF3E0;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="760" y="140" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- MedProc and IT-Fusion row -->
+        <mxCell id="n_medproc" value="Stage 5\nMedProc (Text/Reports → E)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B71C1C;strokeColor=#FFCDD2;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="200" y="260" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_itfusion" value="Stage 6\nIT-Fusion\n(Final ABCDE + Risk → Unified JSON)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F57F17;strokeColor=#FFFDE7;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="520" y="260" width="480" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n_vqa" value="Stage 7\nVQA (Answer + Evidence)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0288D1;strokeColor=#E1F5FE;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="200" y="380" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <!-- arrows -->
+        <mxCell id="e_p_f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_patient" target="n_frontend">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_f_b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_frontend" target="n_backend">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_b_pre" style="edgeStyle=elbowEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_backend" target="n_preproc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_pre_sls" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_preproc" target="n_sls">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_sls_slrc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_sls" target="n_slrc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_slrc_hc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_slrc" target="n_hc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_medproc_it" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_medproc" target="n_itfusion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_hc_it" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_hc" target="n_itfusion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_slrc_it" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#ffffff" edge="1" parent="1" source="n_slrc" target="n_itfusion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_sls_it" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#ffffff" edge="1" parent="1" source="n_sls" target="n_itfusion">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_it_vqa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_itfusion" target="n_vqa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_f_vqa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;strokeColor=#ffffff" edge="1" parent="1" source="n_frontend" target="n_vqa">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_vqa_f" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#ffffff" edge="1" parent="1" source="n_vqa" target="n_frontend">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- db connections from stages -->
+        <mxCell id="e_backend_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_backend" target="n_db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_it_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_itfusion" target="n_db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_hc_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_hc" target="n_db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e_med_db" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="n_medproc" target="n_db">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Stage Diagram: SLS -->
+  <diagram id="stage_sls" name="Stage - SLS">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="s1_in" value="Input: Cleaned Image" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#263238;strokeColor=#ffffff;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1_proc" value="Process:\n- Resize\n- Hair removal\n- Segmentation Model" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1B5E20;strokeColor=#A5D6A7;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="260" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1_out" value="Output: Lesion Mask\n(geometry, contour)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#263238;strokeColor=#FFB74D;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="620" y="40" width="200" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s1_in" target="s1_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s1_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s1_proc" target="s1_out">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Stage Diagram: SLRC -->
+  <diagram id="stage_slrc" name="Stage - SLRC">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="s2_in" value="Inputs:\n- Original Image\n- Lesion Mask" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D47A1;strokeColor=#90CAF9;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s2_proc" value="Process:\n- Align mask\n- Crop bounding box\n- Restore color ROI" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1976D2;strokeColor=#BBDEFB;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="340" y="40" width="300" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="s2_out" value="Output:\n- Clean ROI Image\n- ROI metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D47A1;strokeColor=#FFB74D;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="680" y="40" width="240" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s2_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s2_in" target="s2_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s2_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s2_proc" target="s2_out">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Stage Diagram: HC -->
+  <diagram id="stage_hc" name="Stage - HC">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="s3_in" value="Inputs:\n- ROI Image\n- Lesion Mask" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFECB3;strokeColor=#FF6F00;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3_proc" value="Process:\n- Hierarchical classification\n- Compute A (Asymmetry)\n- Compute B (Border irregularity)\n- Compute C (Color variation)\n- Compute D (Diameter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FF8F00;strokeColor=#FFF3E0;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="340" y="40" width="420" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3_out" value="Outputs:\n- Raw A,B,C,D values\n- Class logits\n- Provenance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFECB3;strokeColor=#FFF3E0;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="800" y="40" width="260" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="s3_in" target="s3_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="s3_proc" target="s3_out">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Stage Diagram: MedProc -->
+  <diagram id="stage_medproc" name="Stage - MedProc">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="s4_in" value="Inputs:\n- Chat text\n- OCR text / Reports" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B71C1C;strokeColor=#FFCDD2;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="300" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4_proc" value="Process:\n- Text normalization\n- Entity extraction\n- Derive E (Evolution)\n- Parse lab values (LDH, biopsy)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C62828;strokeColor=#FFCDD2;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="380" y="40" width="480" height="120" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4_out" value="Outputs:\n- Structured E value\n- Symptom vectors\n- Medical facts JSON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B71C1C;strokeColor=#FFCDD2;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="880" y="40" width="300" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s4_in" target="s4_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#ffffff" edge="1" parent="1" source="s4_proc" target="s4_out">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+  <!-- Stage Diagram: IT-Fusion -->
+  <diagram id="stage_itfusion" name="Stage - IT-Fusion">
+    <mxGraphModel dx="1000" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="it_in1" value="HC Outputs:\n- A,B,C,D\n- Class logits" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFECB3;strokeColor=#FF6F00;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="240" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="it_in2" value="MedProc Outputs:\n- E value\n- Symptoms" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#B71C1C;strokeColor=#FFCDD2;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="320" y="60" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="it_in3" value="SLS / SLRC:\n- Mask &amp; ROI metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0D47A1;strokeColor=#BBDEFB;fontColor=#ffffff" vertex="1" parent="1">
+          <mxGeometry x="640" y="60" width="260" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="it_proc" value="Process:\n1. Validation &amp; Rules\n2. Feature Alignment\n3. Fuse ABCDE\n4. Compute Risk &amp; Label\n5. Construct Unified JSON\n6. Provenance &amp; Flags" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F57F17;strokeColor=#FFFDE7;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="40" y="170" width="860" height="210" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="it_out" value="Output:\n- Final ABCDE + Risk\n- Unified JSON\n- Explanation &amp; Provenance" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F9A825;strokeColor=#FFFDE7;fontColor=#000000" vertex="1" parent="1">
+          <mxGeometry x="320" y="400" width="400" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- edges -->
+        <mxCell id="it_e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="it_in1" target="it_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="it_e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="it_in2" target="it_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="it_e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="it_in3" target="it_proc">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="it_e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#000000" edge="1" parent="1" source="it_proc" target="it_out">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+
+</mxfile>

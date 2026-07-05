@@ -1,0 +1,2 @@
+Q: What does border irregularity indicate in skin lesion analysis?
+A: Irregular, poorly defined, or notched borders suggest malignancy. In the dermoscopic ABCD rule, the border is divided into 8 pie-slice segments. Each segment with abrupt pigment network cutoff scores 1 point. Ragged edges with satellite pigmentation are characteristic of melanoma.

@@ -1,0 +1,40 @@
+_target_: CMC_utils.datasets.ClassificationDataset # DO NOT CHANGE
+_convert_: all # DO NOT CHANGE
+
+name: ADNI_diagnosis_imageanalysis_${oc.select:target_spec, binary} # Name of the dataset
+db_type: tabular # DO NOT CHANGE
+target_classes:
+  binary: [ CN, AD ] # List of the binary classes
+  multiclass: [ CN, EMCI, LMCI, AD ] # List of the multiclass classes
+classes: ${.target_classes.${oc.select:target_spec, binary}} # List of the classes
+label_type: multiclass # multiclass or binary
+
+task: classification # DO NOT CHANGE
+
+path: ${data_path}/tabular/classification/ADNI_diagnosis/${oc.select:target_spec, binary}/image_analysis.csv # Relative path to the file
+
+columns: # Dictionary containing features names as keys and their types as values # DO NOT REMOVE
+    RID: id
+    BRAINVOL: float
+    Entorhinal_bl: float
+    FDG: float
+    FDG_bl: float
+    Fusiform_bl: float
+    Hippocampus_bl: float
+    ICV_bl: float
+    MAX: float
+    MEAN: float
+    MidTemp_bl: float
+    STDEV: float
+    VENTVOL: float
+    Ventricles_bl: float
+    WholeBrain_bl: float
+    # Other features to be inserted
+    DX_bl: target  # DO NOT CHANGE THE VALUE, NAME CORRECTLY THE TARGET VARIABLE
+
+pandas_load_kwargs:
+  header: 0
+
+dataset_class: # DO NOT CHANGE
+  _target_: CMC_utils.datasets.SupervisedTabularDatasetTorch # DO NOT CHANGE
+  _convert_: all # DO NOT CHANGE

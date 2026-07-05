@@ -1,0 +1,9 @@
+# SLRC - Skin Lesion ROI Cropping Module
+# Requirements for SLRC.py
+
+# Image Processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional: For inference
+torch>=2.0.0

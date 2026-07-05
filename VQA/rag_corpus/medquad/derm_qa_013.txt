@@ -1,0 +1,2 @@
+Q: How is squamous cell carcinoma treated?
+A: Low-risk SCC: excision (4-6mm margins) or curettage and electrodesiccation. High-risk SCC: Mohs surgery or wide excision (6-10mm margins), sentinel lymph node biopsy consideration, adjuvant radiation. Locally advanced or metastatic SCC: cemiplimab (anti-PD-1) or pembrolizumab immunotherapy; platinum-based chemotherapy as alternative.

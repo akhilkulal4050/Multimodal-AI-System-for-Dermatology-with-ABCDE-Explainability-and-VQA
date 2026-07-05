@@ -1,0 +1,2 @@
+Q: What does asymmetry mean in dermoscopy?
+A: Asymmetry is evaluated by bisecting the lesion along two perpendicular axes through its geometric center. Score 0 = symmetric on both axes; score 1 = asymmetric on one axis; score 2 = asymmetric on both axes. An asymmetry score of 2 contributes 2.6 points to the Total Dermoscopic Score and is a strong predictor of melanoma.

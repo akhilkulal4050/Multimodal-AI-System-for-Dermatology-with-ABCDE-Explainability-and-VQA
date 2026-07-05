@@ -1,0 +1,2 @@
+Q: What is the prognosis for melanoma?
+A: Five-year survival by stage: Stage I (localized thin) >98%, Stage II (thick/ulcerated) 65-90%, Stage III (regional lymph nodes) 40-78%, Stage IV (distant metastasis) 15-20%. Breslow thickness, ulceration, and mitotic rate are the most important prognostic factors.

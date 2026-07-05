@@ -1,0 +1,2 @@
+Q: What are high-risk features of squamous cell carcinoma?
+A: High-risk SCC features per NCCN guidelines: diameter >2cm, depth >2mm or Clark level IV/V, poor differentiation, perineural or lymphovascular invasion, location on ear or non-hair-bearing lip, arising in scar or chronic inflammation, immunosuppressed patient, and recurrent tumour. These features increase metastatic risk to 10-30% and require Mohs surgery, sentinel node biopsy consideration, and adjuvant radiation.

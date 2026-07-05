@@ -1,0 +1,9 @@
+{
+  "n_eval": 400,
+  "checkpoint": "/home/prasannam24-26/rllava/checkpoints/rllava_stage2_best",
+  "overall": {
+    "bleu4": 0.423,
+    "rouge_l": 0.7468,
+    "exact_match": 0.63
+  }
+}

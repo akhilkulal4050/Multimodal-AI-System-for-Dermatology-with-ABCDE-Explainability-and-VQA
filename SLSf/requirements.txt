@@ -1,0 +1,24 @@
+# SLSf - Skin Lesion Segmentation (ARCUNet)
+# Requirements for ARCUNet.py, ARCUNet_Train.ipynb, and ARCUNet_Train2.ipynb
+
+# Core ML/DL Framework
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Image Processing
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# Augmentation
+albumentations>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+
+# Utilities
+tqdm>=4.65.0
+scikit-learn>=1.3.0
+
+# GPU Monitoring (optional but recommended)
+psutil>=5.9.0

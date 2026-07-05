@@ -1,0 +1,4 @@
+patient_gender,top_diagnosis,confidence,num_diagnoses,has_drugs,symptom_count,evolution_score,uncertainty
+M,038,0.1298,3,True,7,1.0,0.0192
+F,518,0.1558,3,True,1,0.2,0.0211
+M,038,0.189,3,True,3,0.0,0.021

@@ -1,0 +1,63 @@
+_target_: CMC_utils.datasets.ClassificationDataset # DO NOT CHANGE
+_convert_: all # DO NOT CHANGE
+
+name: ADNI_diagnosis_assessment_${oc.select:target_spec, binary} # Name of the dataset
+db_type: tabular # DO NOT CHANGE
+target_classes:
+  binary: [ CN, AD ] # List of the binary classes
+  multiclass: [ CN, EMCI, LMCI, AD ] # List of the multiclass classes
+classes: ${.target_classes.${oc.select:target_spec, binary}} # List of the classes
+label_type: multiclass # multiclass or binary
+
+task: classification # DO NOT CHANGE
+
+path: ${data_path}/tabular/classification/ADNI_diagnosis/${oc.select:target_spec, binary}/assessment.csv # Relative path to the file
+
+columns: # Dictionary containing features names as keys and their types as values # DO NOT REMOVE
+    RID: id
+    FAQBEVG: float
+    FAQEVENT: float
+    FAQFINAN: float
+    FAQFORM: float
+    FAQGAME: float
+    FAQMEAL: float
+    FAQREM: float
+    FAQSHOP: float
+    FAQSOURCE: float
+    FAQTRAVL: float
+    FAQTV: float
+    FAQ_bl: float
+    GDAFRAID: float
+    GDALIVE: float
+    GDBETTER: float
+    GDBORED: float
+    GDDROP: float
+    GDEMPTY: float
+    GDENERGY: float
+    GDHAPPY: float
+    GDHELP: float
+    GDHOME: float
+    GDHOPE: float
+    GDMEMORY: float
+    GDSATIS: float
+    GDSPIRIT: float
+    GDTOTAL: float
+    GDWORTH: float
+    HMEMOTIO: float
+    HMHYPERT: float
+    HMNEURSG: float
+    HMNEURSM: float
+    HMONSET: float
+    HMSCORE: float
+    HMSOMATC: float
+    HMSTEPWS: float
+    HMSTROKE: float
+    # Other features to be inserted
+    DX_bl: target  # DO NOT CHANGE THE VALUE, NAME CORRECTLY THE TARGET VARIABLE
+
+pandas_load_kwargs:
+  header: 0
+
+dataset_class: # DO NOT CHANGE
+  _target_: CMC_utils.datasets.SupervisedTabularDatasetTorch # DO NOT CHANGE
+  _convert_: all # DO NOT CHANGE

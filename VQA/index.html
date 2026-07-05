@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriDermAI — Dermatology Assistant</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #1a56db, #0e9f6e);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  header h1 { font-size: 1.3rem; font-weight: 700; }
+  header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 2px; }
+  .logo {
+    width: 40px; height: 40px; background: rgba(255,255,255,.2);
+    border-radius: 10px; display: flex; align-items: center;
+    justify-content: center; font-size: 1.4rem;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #f6ad55; margin-left: auto; margin-right: 4px;
+  }
+  .status-dot.ok { background: #68d391; }
+  #status-text { font-size: 0.75rem; opacity: 0.9; }
+
+  /* ── Layout ── */
+  .container {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 16px;
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    height: calc(100vh - 72px);
+  }
+
+  /* ── Panel ── */
+  .panel {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Image upload ── */
+  .upload-zone {
+    margin: 16px;
+    border: 2px dashed #cbd5e0;
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f7fafc;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: #1a56db;
+    background: #ebf5fb;
+  }
+  .upload-zone input { display: none; }
+  .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+  .upload-zone p { font-size: 0.85rem; color: #718096; }
+  .upload-zone strong { color: #1a56db; }
+
+  #preview-wrap {
+    margin: 0 16px 16px;
+    position: relative;
+    display: none;
+  }
+  #preview-img {
+    width: 100%; border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    display: block;
+  }
+  .bbox-overlay {
+    position: absolute; border: 2px solid #e53e3e;
+    background: rgba(229,62,62,.08); pointer-events: none;
+  }
+  #change-img-btn {
+    display: block; margin: 0 16px 12px;
+    padding: 8px; width: calc(100% - 32px);
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    background: white; color: #4a5568;
+    font-size: 0.82rem; cursor: pointer;
+  }
+  #change-img-btn:hover { background: #f7fafc; }
+
+  /* ── Clinical info ── */
+  .clinical-form {
+    padding: 0 16px 16px;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .field-group { margin-bottom: 12px; }
+  .field-group label {
+    display: block; font-size: 0.78rem;
+    font-weight: 600; color: #4a5568; margin-bottom: 4px;
+  }
+  .field-group input, .field-group select {
+    width: 100%; padding: 7px 10px;
+    border: 1px solid #e2e8f0; border-radius: 6px;
+    font-size: 0.85rem; color: #2d3748;
+    outline: none; transition: border-color 0.15s;
+  }
+  .field-group input:focus, .field-group select:focus {
+    border-color: #1a56db;
+  }
+  .abcde-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
+  }
+  .abcde-item label { text-align: center; }
+  .abcde-item input {
+    text-align: center; padding: 6px 4px; font-size: 0.82rem;
+  }
+
+  #process-btn {
+    width: calc(100% - 32px); margin: 0 16px 16px;
+    padding: 10px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #1a56db, #0e9f6e);
+    color: white; font-weight: 600; font-size: 0.9rem;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  #process-btn:hover { opacity: 0.9; }
+  #process-btn:disabled { opacity: 0.5; cursor: default; }
+
+  /* ── Chat panel ── */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #session-bar {
+    padding: 8px 16px;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.75rem;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #session-id-text { font-family: monospace; color: #1a56db; }
+
+  #chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .msg.user {
+    background: #1a56db;
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+  }
+  .msg.bot {
+    background: white;
+    border: 1px solid #e2e8f0;
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+    color: #2d3748;
+  }
+  .msg.system {
+    background: #fefcbf;
+    border: 1px solid #f6e05e;
+    align-self: center;
+    font-size: 0.8rem;
+    color: #744210;
+    text-align: center;
+    max-width: 90%;
+  }
+  .msg.error {
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    color: #c53030;
+    align-self: center;
+    max-width: 90%;
+  }
+  .msg-time {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+
+  .typing {
+    display: flex; gap: 4px; padding: 12px 14px;
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 12px; border-bottom-left-radius: 3px;
+    align-self: flex-start;
+  }
+  .typing span {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #a0aec0; animation: bounce 1.2s infinite;
+  }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%,60%,100% { transform: translateY(0); }
+    30%          { transform: translateY(-6px); }
+  }
+
+  /* ── Input area ── */
+  .chat-input-wrap {
+    padding: 12px 16px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    gap: 8px;
+    background: white;
+  }
+  #question-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    max-height: 100px;
+    min-height: 40px;
+    transition: border-color 0.15s;
+  }
+  #question-input:focus { border-color: #1a56db; }
+  #question-input:disabled { background: #f7fafc; color: #a0aec0; }
+
+  #send-btn {
+    width: 40px; height: 40px; border: none; border-radius: 50%;
+    background: #1a56db; color: white; font-size: 1.1rem;
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; transition: background 0.15s; flex-shrink: 0;
+  }
+  #send-btn:hover { background: #1e429f; }
+  #send-btn:disabled { background: #bee3f8; cursor: default; }
+
+  /* ── Quick questions ── */
+  .quick-questions {
+    padding: 0 16px 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .quick-btn {
+    padding: 5px 10px;
+    border: 1px solid #bee3f8;
+    border-radius: 20px;
+    background: #ebf8ff;
+    color: #2b6cb0;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .quick-btn:hover { background: #bee3f8; }
+  .quick-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── Bbox info badge ── */
+  #bbox-badge {
+    display: none;
+    margin: 0 16px 12px;
+    padding: 8px 12px;
+    background: #f0fff4;
+    border: 1px solid #9ae6b4;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: #276749;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    gap: 8px;
+    padding: 32px;
+  }
+  .empty-state .icon { font-size: 3rem; }
+  .empty-state p { font-size: 0.88rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔬</div>
+  <div>
+    <h1>NutriDermAI</h1>
+    <p>ABCDE-Aware Dermatology Assistant</p>
+  </div>
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text">Connecting...</span>
+</header>
+
+<div class="container">
+
+  <!-- LEFT: Image + Clinical Info -->
+  <div class="panel">
+    <div class="panel-header">🖼️ Image & Clinical Context</div>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept="image/*"/>
+      <div class="upload-icon">📷</div>
+      <p><strong>Click or drag</strong> a dermoscopy image here</p>
+      <p style="margin-top:4px;font-size:0.75rem">JPG, PNG, BMP supported</p>
+    </div>
+
+    <div id="preview-wrap">
+      <img id="preview-img" alt="Uploaded dermoscopy image"/>
+      <div class="bbox-overlay" id="bbox-overlay" style="display:none"></div>
+    </div>
+
+    <button id="change-img-btn" style="display:none">↩ Change image</button>
+
+    <div id="bbox-badge">
+      ✅ Lesion detected at <span id="bbox-text"></span>
+    </div>
+
+    <div class="clinical-form" id="clinical-form">
+      <div class="field-group">
+        <label>Disease Label (optional — from Stage 6)</label>
+        <select id="disease-label">
+          <option value="">-- Auto-detect --</option>
+          <option value="MEL">MEL — Melanoma</option>
+          <option value="BCC">BCC — Basal Cell Carcinoma</option>
+          <option value="SCC">SCC — Squamous Cell Carcinoma</option>
+          <option value="ACK">ACK — Actinic Keratosis</option>
+          <option value="NEV">NEV — Melanocytic Nevus</option>
+          <option value="SEK">SEK — Seborrheic Keratosis</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Risk Score (0.0 – 1.0)</label>
+        <input type="number" id="risk-score" placeholder="e.g. 0.72"
+               min="0" max="1" step="0.01"/>
+      </div>
+      <div class="field-group">
+        <label>ABCDE Scores (0.0 – 1.0 each)</label>
+        <div class="abcde-grid">
+          <div class="abcde-item">
+            <label>A</label>
+            <input type="number" id="score-A" placeholder="0.0"
+                   min="0" max="1" step="0.01"/>
+          </div>
+          <div class="abcde-item">
+            <label>B</label>
+            <input type="number" id="score-B" placeholder="0.0"
+                   min="0" max="1" step="0.01"/>
+          </div>
+          <div class="abcde-item">
+            <label>C</label>
+            <input type="number" id="score-C" placeholder="0.0"
+                   min="0" max="1" step="0.01"/>
+          </div>
+          <div class="abcde-item">
+            <label>D</label>
+            <input type="number" id="score-D" placeholder="0.0"
+                   min="0" max="1" step="0.01"/>
+          </div>
+          <div class="abcde-item">
+            <label>E</label>
+            <input type="number" id="score-E" placeholder="0.0"
+                   min="0" max="1" step="0.01"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button id="process-btn" disabled>⬆ Upload & Analyse Image</button>
+  </div>
+
+  <!-- RIGHT: Chat -->
+  <div class="panel chat-panel">
+    <div class="panel-header">💬 Dermatology Q&A
+      <span id="turn-count"
+            style="margin-left:auto;font-weight:400;font-size:0.78rem;
+                   color:#718096"></span>
+    </div>
+
+    <div id="session-bar">
+      Session: <span id="session-id-text">—</span>
+      <button onclick="resetSession()"
+              style="margin-left:auto;padding:3px 10px;border:1px solid #e2e8f0;
+                     border-radius:6px;background:white;font-size:0.75rem;
+                     cursor:pointer;color:#4a5568">New session</button>
+    </div>
+
+    <div id="chat-messages">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">🩺</div>
+        <p>Upload a dermoscopy image and ask a question about the skin lesion.</p>
+        <p style="font-size:0.78rem;margin-top:4px">
+          ABCDE criteria, diagnosis, treatment, risk — all supported.</p>
+      </div>
+    </div>
+
+    <div class="quick-questions" id="quick-questions">
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">What is this lesion?</button>
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">Is this malignant?</button>
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">Explain the ABCDE scores</button>
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">What treatment is recommended?</button>
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">What is the risk level?</button>
+      <button class="quick-btn" disabled
+              onclick="sendQuick(this)">How urgent is a referral?</button>
+    </div>
+
+    <div class="chat-input-wrap">
+      <textarea id="question-input" placeholder="Ask about this lesion..."
+                rows="1" disabled></textarea>
+      <button id="send-btn" disabled onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const API = "http://localhost:8000";
+let sessionId   = null;
+let imageReady  = false;
+let isProcessing = false;
+
+// ── Health check ──────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API}/health`, {signal: AbortSignal.timeout(3000)});
+    if (r.ok) {
+      const d = await r.json();
+      document.getElementById("status-dot").classList.add("ok");
+      document.getElementById("status-text").textContent =
+        `Online · ${d.vram_gb}GB VRAM · ${d.rag_chunks} RAG chunks`;
+    } else throw new Error();
+  } catch {
+    document.getElementById("status-dot").style.background = "#fc8181";
+    document.getElementById("status-text").textContent = "API offline — start dermatology_bot.py";
+  }
+}
+
+// ── Session ───────────────────────────────────────────────────────────────
+async function ensureSession() {
+  if (sessionId) return;
+  const r = await fetch(`${API}/session/new`, {method:"POST"});
+  const d = await r.json();
+  sessionId = d.session_id;
+  document.getElementById("session-id-text").textContent = sessionId;
+}
+
+function resetSession() {
+  sessionId = null; imageReady = false;
+  document.getElementById("session-id-text").textContent = "—";
+  document.getElementById("chat-messages").innerHTML = "";
+  document.getElementById("empty-state") &&
+    document.getElementById("chat-messages").appendChild(emptyState());
+  document.getElementById("preview-wrap").style.display = "none";
+  document.getElementById("change-img-btn").style.display = "none";
+  document.getElementById("upload-zone").style.display = "block";
+  document.getElementById("bbox-badge").style.display = "none";
+  document.getElementById("bbox-overlay").style.display = "none";
+  document.getElementById("process-btn").disabled = true;
+  setInputEnabled(false);
+  document.getElementById("turn-count").textContent = "";
+}
+
+function emptyState() {
+  const d = document.createElement("div");
+  d.className = "empty-state"; d.id = "empty-state";
+  d.innerHTML = `<div class="icon">🩺</div>
+    <p>Upload a dermoscopy image and ask a question about the skin lesion.</p>
+    <p style="font-size:0.78rem;margin-top:4px">
+      ABCDE criteria, diagnosis, treatment, risk — all supported.</p>`;
+  return d;
+}
+
+// ── File upload ───────────────────────────────────────────────────────────
+const uploadZone  = document.getElementById("upload-zone");
+const fileInput   = document.getElementById("file-input");
+const previewWrap = document.getElementById("preview-wrap");
+const previewImg  = document.getElementById("preview-img");
+
+uploadZone.addEventListener("click", () => fileInput.click());
+uploadZone.addEventListener("dragover", e => {
+  e.preventDefault(); uploadZone.classList.add("drag-over"); });
+uploadZone.addEventListener("dragleave", () =>
+  uploadZone.classList.remove("drag-over"));
+uploadZone.addEventListener("drop", e => {
+  e.preventDefault(); uploadZone.classList.remove("drag-over");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+let selectedFile = null;
+function handleFile(file) {
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  previewImg.src = url;
+  uploadZone.style.display = "none";
+  previewWrap.style.display = "block";
+  document.getElementById("change-img-btn").style.display = "block";
+  document.getElementById("process-btn").disabled = false;
+}
+
+document.getElementById("change-img-btn").addEventListener("click", () => {
+  selectedFile = null;
+  uploadZone.style.display = "block";
+  previewWrap.style.display = "none";
+  document.getElementById("change-img-btn").style.display = "none";
+  document.getElementById("bbox-badge").style.display = "none";
+  document.getElementById("bbox-overlay").style.display = "none";
+  document.getElementById("process-btn").disabled = true;
+  imageReady = false;
+  setInputEnabled(false);
+  fileInput.value = "";
+});
+
+// ── Process image ─────────────────────────────────────────────────────────
+document.getElementById("process-btn").addEventListener("click", processImage);
+
+async function processImage() {
+  if (!selectedFile || isProcessing) return;
+  isProcessing = true;
+  const btn = document.getElementById("process-btn");
+  btn.disabled = true; btn.textContent = "⏳ Processing...";
+
+  try {
+    await ensureSession();
+    clearEmpty();
+
+    const fd = new FormData();
+    fd.append("file", selectedFile);
+
+    // Optional clinical data
+    const disease = document.getElementById("disease-label").value;
+    const risk    = document.getElementById("risk-score").value;
+    const scores  = {A:"score-A",B:"score-B",C:"score-C",D:"score-D",E:"score-E"};
+
+    if (disease) fd.append("disease_label", disease);
+    if (risk)    fd.append("risk_score", risk);
+    Object.entries(scores).forEach(([k,id]) => {
+      const v = document.getElementById(id).value;
+      if (v) fd.append(k, v);
+    });
+
+    addMsg("system", "🔬 Running ARCUNet segmentation + SLRC lesion detection...");
+
+    const r = await fetch(`${API}/session/${sessionId}/image`, {
+      method:"POST", body:fd });
+
+    if (!r.ok) {
+      const err = await r.json();
+      addMsg("error", `Image processing failed: ${err.detail || r.statusText}`);
+      return;
+    }
+
+    const d = await r.json();
+    const {x,y,w,h} = d.bbox;
+
+    // Show bbox overlay on preview
+    showBbox(x,y,w,h);
+
+    // Badge
+    const badge = document.getElementById("bbox-badge");
+    badge.style.display = "block";
+    document.getElementById("bbox-text").textContent =
+      `(${x}, ${y})  ${w}×${h}px`;
+    if (d.disease) badge.innerHTML += ` · <b>${d.disease}</b>`;
+    if (d.risk_tier) badge.innerHTML += ` · Risk: <b>${d.risk_tier}</b>`;
+
+    addMsg("system",
+      `✅ Lesion detected at (${x}, ${y}), size ${w}×${h}px. ` +
+      (d.disease ? `Disease: ${d.disease}. ` : "") +
+      (d.risk_tier ? `Risk tier: ${d.risk_tier}. ` : "") +
+      "You can now ask questions about this lesion.");
+
+    imageReady = true;
+    setInputEnabled(true);
+
+  } catch(e) {
+    addMsg("error", `Error: ${e.message}. Make sure dermatology_bot.py is running.`);
+  } finally {
+    isProcessing = false;
+    btn.disabled  = false;
+    btn.textContent = "⬆ Upload & Analyse Image";
+  }
+}
+
+function showBbox(x,y,w,h) {
+  const img = previewImg;
+  const scaleX = img.clientWidth  / img.naturalWidth;
+  const scaleY = img.clientHeight / img.naturalHeight;
+  const overlay = document.getElementById("bbox-overlay");
+  overlay.style.display = "block";
+  overlay.style.left   = (x * scaleX) + "px";
+  overlay.style.top    = (y * scaleY) + "px";
+  overlay.style.width  = (w * scaleX) + "px";
+  overlay.style.height = (h * scaleY) + "px";
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────
+document.getElementById("question-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+async function sendMessage() {
+  const input = document.getElementById("question-input");
+  const q = input.value.trim();
+  if (!q || !imageReady || isProcessing) return;
+
+  input.value = ""; input.style.height = "auto";
+  addMsg("user", q);
+  const typing = addTyping();
+  setInputEnabled(false);
+  isProcessing = true;
+
+  try {
+    const fd = new FormData();
+    fd.append("question", q);
+    const r = await fetch(`${API}/session/${sessionId}/ask`,
+      {method:"POST", body:fd});
+    typing.remove();
+
+    if (!r.ok) {
+      const err = await r.json();
+      addMsg("error", `Error: ${err.detail || r.statusText}`);
+      return;
+    }
+    const d = await r.json();
+    addMsg("bot", d.answer);
+    document.getElementById("turn-count").textContent =
+      `Turn ${d.turn_count}`;
+  } catch(e) {
+    typing.remove();
+    addMsg("error", `Request failed: ${e.message}`);
+  } finally {
+    isProcessing = false;
+    setInputEnabled(true);
+    document.getElementById("question-input").focus();
+  }
+}
+
+function sendQuick(btn) {
+  document.getElementById("question-input").value = btn.textContent;
+  sendMessage();
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────
+function setInputEnabled(enabled) {
+  document.getElementById("question-input").disabled = !enabled;
+  document.getElementById("send-btn").disabled = !enabled;
+  document.querySelectorAll(".quick-btn").forEach(b => b.disabled = !enabled);
+}
+
+function clearEmpty() {
+  const es = document.getElementById("empty-state");
+  if (es) es.remove();
+}
+
+function addMsg(role, text) {
+  clearEmpty();
+  const wrap = document.getElementById("chat-messages");
+  const div  = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.innerHTML = `<div>${escHtml(text)}</div>
+    <div class="msg-time">${new Date().toLocaleTimeString()}</div>`;
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+function addTyping() {
+  const wrap = document.getElementById("chat-messages");
+  const div  = document.createElement("div");
+  div.className = "typing";
+  div.innerHTML = "<span></span><span></span><span></span>";
+  wrap.appendChild(div);
+  wrap.scrollTop = wrap.scrollHeight;
+  return div;
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+            .replace(/>/g,"&gt;").replace(/\n/g,"<br>");
+}
+
+// Auto-resize textarea
+document.getElementById("question-input").addEventListener("input", function() {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 100) + "px";
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────
+checkHealth();
+setInterval(checkHealth, 30000);
+</script>
+</body>
+</html>

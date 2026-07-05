@@ -1,0 +1,2 @@
+Q: What is photodynamic therapy for skin lesions?
+A: PDT uses a photosensitising agent (aminolevulinic acid or methyl aminolevulinate) applied topically, preferentially absorbed by dysplastic cells. Activation with specific wavelength light (630nm red) generates reactive oxygen species that selectively destroy abnormal cells. Highly effective for AKs (70-90% clearance), superficial BCC, and Bowen's disease. Excellent cosmetic outcomes.

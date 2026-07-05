@@ -1,0 +1,68 @@
+# @package _global_
+
+experiment_name: ${db_name}_${seed}_multimodal_joint_fusion_classification_with_missing_generation # DO NOT CHANGE
+experiment_subname: ${model_name}_${preprocessing.imputer.method}_${preprocessing.numerical.method}_${preprocessing.categorical.method}_${missing_generation.train.apply_to}_${missing_generation.train.method} # DO NOT CHANGE
+pipeline: multimodal_joint_fusion
+
+seed: 42
+verbose: 1
+continue_experiment: True  # True # False
+
+missing_percentages: [0.0, 0.05, 0.1, 0.3, 0.5, 0.75]
+multimodal_missing_generation: modalities
+
+naim_version: none
+
+db_name: AI4Covid_death
+model_name: ${shared_net.name}
+
+defaults:
+  - _self_
+  - paths@: default
+  - paths: missing_experiment_paths
+
+  - databases@dbs.0: AI4Covid_personal_death
+  - databases@dbs.1: AI4Covid_blood_death
+  - databases@dbs.2: AI4Covid_history_death
+  - databases@dbs.3: AI4Covid_state_death
+
+  - cross_validation@test_cv: stratifiedkfold
+  - cross_validation@val_cv: holdout
+
+  - preprocessing/missing_generation@missing_generation.train: MCAR_global # DO NOT CHANGE
+  - preprocessing/missing_generation@missing_generation.val: no_generation # DO NOT CHANGE
+  - preprocessing/missing_generation@missing_generation.test: MCAR_global  # DO NOT CHANGE
+
+  - preprocessing/numerical: normalize # normalize # standardize
+  - preprocessing/categorical: categoricalencode # categoricalencode or onehotencode
+  - preprocessing/imputer: simple # simple or knn or iterative or noimputation
+
+  - model_type_params@dl_params: dl_params
+  - model_type_params@ml_params: ml_params
+
+  - model@ms_models.0: tabnet_torch
+  - model@ms_models.1: tabnet_torch
+  - model@ms_models.2: tabnet_torch
+  - model@ms_models.3: tabnet_torch
+  - model@shared_net: tabnet_torch
+  - model: multimodal_learner
+
+  - model_type_params@train.dl_params: dl_params
+  - initializer@train.initializer: xavier_uniform
+  - loss@train.loss.CE: cross_entropy
+  # - loss@train.loss.BCE: binary_cross_entropy
+  - regularizer@train.regularizer.l1: l1
+  - regularizer@train.regularizer.l2: l2
+  - optimizer@train.optimizer: adam
+  - train_utils@train.manager: train_manager
+
+  - metric@train.set_metrics.auc: auc
+  - metric@train.set_metrics.f1: f1_score
+
+  - metric@performance_metrics.auc: auc
+  - metric@performance_metrics.acc: accuracy
+  - metric@performance_metrics.rec: recall
+  - metric@performance_metrics.prec: precision
+  - metric@performance_metrics.f1: f1_score
+  - metric@performance_metrics.mcc: mcc
+  - metric@performance_metrics.gmean: gmean

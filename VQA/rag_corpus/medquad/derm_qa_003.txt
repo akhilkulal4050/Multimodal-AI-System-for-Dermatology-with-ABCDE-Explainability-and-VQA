@@ -1,0 +1,2 @@
+Q: How is melanoma treated?
+A: Early melanoma is treated with wide local excision with margins 0.5-2.0cm depending on Breslow thickness. Melanoma over 0.8mm requires sentinel lymph node biopsy. Advanced melanoma is treated with immunotherapy (pembrolizumab, nivolumab, ipilimumab) or targeted therapy (vemurafenib + dabrafenib for BRAF V600 mutations). 5-year survival: Stage I >98%, Stage IV 15-20% with modern immunotherapy.

@@ -1,0 +1,105 @@
+{
+  "session_id": "23f13fda",
+  "image_path": null,
+  "bbox": [
+    0,
+    0,
+    100,
+    100
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "content": "What skin condition is shown in this image?",
+      "ts": "2026-07-09T10:04:41.698089"
+    },
+    {
+      "role": "assistant",
+      "content": "No Definitive Diagnosis \u2014 Low risk. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:41.698119"
+    },
+    {
+      "role": "user",
+      "content": "Explain the ABCDE scores for this lesion",
+      "ts": "2026-07-09T10:04:43.474437"
+    },
+    {
+      "role": "assistant",
+      "content": "A=0.0, B=0.0, C=0.0, D=0.0, E=0.0.",
+      "ts": "2026-07-09T10:04:43.474463"
+    },
+    {
+      "role": "user",
+      "content": "How serious is this?",
+      "ts": "2026-07-09T10:04:45.360820"
+    },
+    {
+      "role": "assistant",
+      "content": "Low risk. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:45.360847"
+    },
+    {
+      "role": "user",
+      "content": "What treatment is recommended?",
+      "ts": "2026-07-09T10:04:47.308101"
+    },
+    {
+      "role": "assistant",
+      "content": "No treatment recommended. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:47.308126"
+    },
+    {
+      "role": "user",
+      "content": "Could this be a benign nevus?",
+      "ts": "2026-07-09T10:04:47.924191"
+    },
+    {
+      "role": "assistant",
+      "content": "No",
+      "ts": "2026-07-09T10:04:47.924219"
+    },
+    {
+      "role": "user",
+      "content": "What should the patient do today?",
+      "ts": "2026-07-09T10:04:49.849783"
+    },
+    {
+      "role": "assistant",
+      "content": "No treatment recommended. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:49.849811"
+    },
+    {
+      "role": "user",
+      "content": "Based on what we discussed, when exactly should the patient see a doctor?",
+      "ts": "2026-07-09T10:04:55.468529"
+    },
+    {
+      "role": "assistant",
+      "content": "No doctor visit needed. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:55.468555"
+    },
+    {
+      "role": "user",
+      "content": "Earlier you mentioned a risk score \u2014 what was it and what tier does it put this in?",
+      "ts": "2026-07-09T10:04:56.780146"
+    },
+    {
+      "role": "assistant",
+      "content": "Risk: Low (0.0). Tier: Low (0.0).",
+      "ts": "2026-07-09T10:04:56.780173"
+    },
+    {
+      "role": "user",
+      "content": "What does the AAD guideline say about melanoma excision margins?",
+      "ts": "2026-07-09T10:04:58.564773"
+    },
+    {
+      "role": "assistant",
+      "content": "A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:58.564799"
+    }
+  ],
+  "context_sum": "",
+  "created_at": "2026-07-09T10:04:38.913160",
+  "updated_at": "2026-07-09T10:04:58.564802"
+}

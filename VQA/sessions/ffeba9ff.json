@@ -1,0 +1,45 @@
+{
+  "session_id": "ffeba9ff",
+  "image_path": null,
+  "bbox": [
+    0,
+    0,
+    100,
+    100
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "content": "What is this skin lesion?",
+      "ts": "2026-07-09T10:04:52.069435"
+    },
+    {
+      "role": "assistant",
+      "content": "No Definitive Diagnosis \u2014 Low risk. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:04:52.069461"
+    },
+    {
+      "role": "user",
+      "content": "Is this mole dangerous?",
+      "ts": "2026-07-09T10:04:52.690266"
+    },
+    {
+      "role": "assistant",
+      "content": "No.",
+      "ts": "2026-07-09T10:04:52.690295"
+    },
+    {
+      "role": "user",
+      "content": "How often should I get this checked?",
+      "ts": "2026-07-09T10:04:53.499681"
+    },
+    {
+      "role": "assistant",
+      "content": "No follow-up recommended.",
+      "ts": "2026-07-09T10:04:53.499709"
+    }
+  ],
+  "context_sum": "",
+  "created_at": "2026-07-09T10:04:49.857875",
+  "updated_at": "2026-07-09T10:04:53.499712"
+}

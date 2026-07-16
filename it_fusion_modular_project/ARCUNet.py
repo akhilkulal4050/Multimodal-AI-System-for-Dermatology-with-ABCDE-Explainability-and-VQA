@@ -131,16 +131,10 @@ class ComboLoss(nn.Module):
         smooth : smoothing for Dice denominator
     """
 
-    def __init__(self, alpha: float = 0.5, smooth: float = 1.0,
-                 pos_weight: float = 3.0):
+    def __init__(self, alpha: float = 0.5, smooth: float = 1.0):
         super().__init__()
         self.alpha = alpha
-        # pos_weight compensates class imbalance: lesion pixels (~20-30% of image)
-        # vs background (~70-80%). pos_weight=3.0 ≈ inverse foreground fraction.
-        # This prevents the trivial all-background solution and improves
-        # Dice on small lesions by 2-5 points.
-        pw = torch.tensor([pos_weight])
-        self.bce   = nn.BCEWithLogitsLoss(pos_weight=pw)
+        self.bce   = nn.BCEWithLogitsLoss()
         self.dice  = DiceLoss(smooth=smooth)
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
@@ -190,92 +184,6 @@ class DeepSupervisionLoss(nn.Module):
         # Eval mode — outputs is a plain tensor
         return self.base_loss(outputs, targets)
 
-
-
-class FocalLoss(nn.Module):
-    """
-    Focal Loss for binary segmentation.
-
-    Focal Loss down-weights easy examples (well-classified background pixels)
-    and focuses training on hard examples (lesion boundaries, small lesions).
-
-    FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
-
-    Args:
-        alpha  : weight for positive class (foreground)
-        gamma  : focusing parameter — higher = more focus on hard examples
-                 gamma=0 reduces to standard BCE; gamma=2 is standard Focal
-        smooth : smoothing for numerical stability
-    """
-    def __init__(self, alpha: float = 0.8, gamma: float = 2.0):
-        super().__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-
-    def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        bce_loss = F.binary_cross_entropy_with_logits(logits, targets, reduction='none')
-        prob     = torch.sigmoid(logits)
-        p_t      = prob * targets + (1 - prob) * (1 - targets)
-        alpha_t  = self.alpha * targets + (1 - self.alpha) * (1 - targets)
-        focal_w  = alpha_t * (1 - p_t) ** self.gamma
-        return (focal_w * bce_loss).mean()
-
-
-class DeepSupervisionLossV3(nn.Module):
-    """
-    Deep Supervision Loss V3 — Focal + SoftDice + Label-Smoothed BCE.
-
-    Best for skin lesion segmentation because:
-      • FocalLoss focuses on hard boundary pixels (lesion edges)
-      • DiceLoss optimises global overlap directly
-      • SmoothedBCE prevents overconfident predictions (closes train/val gap)
-
-    Total = w_main * [w_focal*Focal + w_dice*Dice + w_bce*SmoothedBCE]
-          + w_aux  * same for each DS head
-
-    Args:
-        aux_weight   : total weight for auxiliary deep supervision heads
-        focal_w      : weight for FocalLoss term
-        dice_w       : weight for SoftDice term
-        bce_w        : weight for label-smoothed BCE term
-        label_smooth : epsilon for label smoothing
-    """
-    def __init__(self,
-                 aux_weight:   float = 0.35,
-                 focal_w:      float = 0.4,
-                 dice_w:       float = 0.4,
-                 bce_w:        float = 0.2,
-                 label_smooth: float = 0.05):
-        super().__init__()
-        self.focal     = FocalLoss(alpha=0.8, gamma=2.0)
-        self.dice      = DiceLoss(smooth=1.0)
-        self.bce       = nn.BCEWithLogitsLoss()
-        self.focal_w   = focal_w
-        self.dice_w    = dice_w
-        self.bce_w     = bce_w
-        self.aux_w     = aux_weight
-        self.eps       = label_smooth
-
-    def _single(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        # Label smoothing: soft targets prevent overconfidence
-        t_soft = targets * (1 - self.eps) + (1 - targets) * self.eps
-        return (self.focal_w * self.focal(logits, targets)
-                + self.dice_w  * self.dice(logits, targets)
-                + self.bce_w   * self.bce(logits, t_soft))
-
-    def forward(self, outputs, targets: torch.Tensor) -> torch.Tensor:
-        if isinstance(outputs, (tuple, list)):
-            main     = outputs[0]
-            aux_list = outputs[1:]
-            loss     = (1.0 - self.aux_w) * self._single(main, targets)
-            w_each   = self.aux_w / max(len(aux_list), 1)
-            for aux in aux_list:
-                # Downsample target to match aux resolution for efficiency
-                h, w = aux.shape[2], aux.shape[3]
-                t_ds = F.interpolate(targets, size=(h, w), mode='nearest')
-                loss = loss + w_each * self._single(aux, t_ds)
-            return loss
-        return self._single(outputs, targets)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # 3.  MODEL BUILDING BLOCKS
@@ -351,9 +259,10 @@ class AttentionGate(nn.Module):
             nn.BatchNorm2d(F_int),
         )
         self.psi  = nn.Sequential(
-            nn.Conv2d(F_int, 1, kernel_size=1, bias=True),
+            nn.Conv2d(F_int, 1,     kernel_size=1, bias=False),
+            nn.BatchNorm2d(1),
             nn.Sigmoid(),
-        )  # No BN before Sigmoid — allows full (0,1) attention range
+        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, g: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
@@ -400,10 +309,9 @@ class ARCUNet(nn.Module):
                     Recommended range: 0.05 – 0.15.
     """
 
-    def __init__(self, dropout_p: float = 0.1, use_checkpoint: bool = False):
+    def __init__(self, dropout_p: float = 0.1):
         super().__init__()
         dp = dropout_p
-        self.use_checkpoint = use_checkpoint   # enable for full GPU utilisation
 
         # ── Encoder ───────────────────────────────────────────────────
         self.enc1 = ResidualConv(3,   64,   dp)
@@ -463,37 +371,31 @@ class ARCUNet(nn.Module):
     def forward(self, x: torch.Tensor):
         H, W = x.shape[2], x.shape[3]
 
-        # Gradient checkpointing trades compute for memory.
-        # When enabled (self.use_checkpoint=True), activations are NOT stored
-        # during the forward pass — they are recomputed during backward.
-        # Effect: ~40% less VRAM, ~20% slower. Enables batch=4 at 512×512 on 12GB.
-        ck = torch.utils.checkpoint.checkpoint if self.use_checkpoint else lambda f, *a, **k: f(*a)
-
         # Encoder
-        e1 = ck(self.enc1, x,          use_reentrant=False)
-        e2 = ck(self.enc2, self.pool(e1), use_reentrant=False)
-        e3 = ck(self.enc3, self.pool(e2), use_reentrant=False)
-        e4 = ck(self.enc4, self.pool(e3), use_reentrant=False)
+        e1 = self.enc1(x)
+        e2 = self.enc2(self.pool(e1))
+        e3 = self.enc3(self.pool(e2))
+        e4 = self.enc4(self.pool(e3))
 
         # Bottleneck
-        b  = ck(self.bottleneck, self.pool(e4), use_reentrant=False)
+        b = self.bottleneck(self.pool(e4))
 
         # Decoder + attention gates
         d4 = self.up4(b)
         e4 = self.att4(d4, e4)
-        d4 = ck(self.dec4, torch.cat([d4, e4], dim=1), use_reentrant=False)
+        d4 = self.dec4(torch.cat([d4, e4], dim=1))
 
         d3 = self.up3(d4)
         e3 = self.att3(d3, e3)
-        d3 = ck(self.dec3, torch.cat([d3, e3], dim=1), use_reentrant=False)
+        d3 = self.dec3(torch.cat([d3, e3], dim=1))
 
         d2 = self.up2(d3)
         e2 = self.att2(d2, e2)
-        d2 = ck(self.dec2, torch.cat([d2, e2], dim=1), use_reentrant=False)
+        d2 = self.dec2(torch.cat([d2, e2], dim=1))
 
         d1 = self.up1(d2)
         e1 = self.att1(d1, e1)
-        d1 = ck(self.dec1, torch.cat([d1, e1], dim=1), use_reentrant=False)
+        d1 = self.dec1(torch.cat([d1, e1], dim=1))
 
         main_out = self.final(d1)
 
@@ -511,8 +413,7 @@ class ARCUNet(nn.Module):
 
 def load_model(checkpoint_path: str,
                device:          str   = 'cpu',
-               dropout_p:       float = 0.1,
-               use_checkpoint:  bool  = False) -> ARCUNet:
+               dropout_p:       float = 0.1) -> ARCUNet:
     """
     Load a trained ARCUNet from a .pt / .pth checkpoint file.
 
@@ -525,12 +426,11 @@ def load_model(checkpoint_path: str,
         checkpoint_path : path to checkpoint file
         device          : 'cpu' or 'cuda'
         dropout_p       : must match the value used during training
-        use_checkpoint  : enable gradient checkpointing for inference memory saving
 
     Returns:
         ARCUNet in eval mode, moved to device.
     """
-    model = ARCUNet(dropout_p=dropout_p, use_checkpoint=use_checkpoint)
+    model = ARCUNet(dropout_p=dropout_p)
     dev   = torch.device(device)
 
     try:

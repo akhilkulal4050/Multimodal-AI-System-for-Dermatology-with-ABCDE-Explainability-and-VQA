@@ -33,6 +33,9 @@ SKIN_ICD_PREFIXES = {
     '172',  # Melanoma of skin
     '173',  # Other malignant neoplasm of skin
     '216',  # Benign neoplasm of skin
+    '232',  # Carcinoma in situ of skin
+    '238',  # Uncertain neoplasm of skin (238.2)
+    '239',  # Unspecified neoplasm of skin (239.2)
     # Inflammatory / allergic skin conditions
     '690', '691', '692', '693', '694', '695', '696', '697', '698',
     '700', '701', '702', '703', '704', '705', '706', '707', '708', '709',
@@ -136,33 +139,85 @@ def filter_icd_column(df, icd_col: str, group_keys: List[str]):
 # Symptom/Evolution Keywords
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── EVOLUTION_KEYWORDS: skin-specific signals only ───────────────────────────
+# Used for has_symptom training label — must be tightly scoped to skin evolution
+# so the symptom_head learns "changing skin lesion" not "any clinical note"
+EVOLUTION_KEYWORDS = [
+    # Size / spread changes (unambiguous evolution signals)
+    'growing', 'grown', 'enlarging', 'enlarged', 'spreading', 'spread',
+    'increasing in size', 'getting bigger', 'getting larger',
+    # Colour changes
+    'color change', 'colour change', 'changing color', 'darkening', 'lightening',
+    'new pigmentation', 'multicoloured', 'variegated',
+    # Surface changes
+    'bleeding', 'bleeding from', 'oozing', 'crusting', 'ulcerating', 'ulcerated',
+    'scabbing', 'weeping',
+    # Sensory changes
+    'itching', 'pruritus', 'burning sensation', 'painful to touch',
+    # Morphological change
+    'new lesion', 'appeared recently', 'recently changed', 'changed in',
+    'noticed change', 'change in shape', 'change in border',
+    # Temporal context WITH skin reference
+    'lesion for', 'spot for', 'mole for', 'growth for',
+    'developed over', 'appeared over', 'present for',
+    'rapid change', 'sudden change', 'gradual change',
+]
+
+# ── SYMPTOM_KEYWORDS: full list used for RUNTIME keyword extraction ────────────
+# This broader list is used at inference to extract keywords that are
+# passed to compute_evolution() as symptom_keywords for boost scoring.
+# NOT used to create has_symptom training labels (that uses EVOLUTION_KEYWORDS).
 SYMPTOM_KEYWORDS = [
-    # Evolution (E) signals — critical for ABCDE
-    'growing', 'spreading', 'increasing', 'enlarging', 'worsening',
+    # Evolution signals (same as EVOLUTION_KEYWORDS above)
+    'growing', 'enlarging', 'spreading', 'increasing', 'worsening',
     'bleeding', 'bleeding from', 'oozing', 'crusting', 'ulcerating',
     'itching', 'pruritus', 'burning', 'painful', 'tender',
-    'color change', 'darkening', 'lighter', 'irregular',
-    'weeks', 'months', 'years', 'sudden onset', 'gradual',
-    # General symptoms
+    'color change', 'darkening', 'lighter', 'new lesion',
+    'rapid change', 'sudden change', 'gradual change',
+    'developed over', 'appeared over', 'recently changed',
+    # Temporal WITH context (lesion/spot/mole explicitly)
+    'lesion for weeks', 'lesion for months', 'lesion for years',
+    'spot for weeks', 'mole for months', 'growth for',
+    'sudden onset', 'gradual onset',
+    # General symptoms (for general clinical context extraction)
     'fever', 'fatigue', 'nausea', 'vomiting', 'dyspnea', 'shortness of breath',
     'chest pain', 'palpitations', 'syncope', 'edema', 'swelling',
     'diarrhea', 'constipation', 'abdominal pain', 'jaundice',
     'headache', 'dizziness', 'weakness', 'confusion', 'seizure',
     'polyuria', 'polydipsia', 'weight loss', 'weight gain', 'anorexia',
     'hemoptysis', 'hematuria', 'dysuria', 'cough', 'sputum',
-    # Skin-specific
+    # Skin-specific morphology
     'erythema', 'induration', 'vesicle', 'papule', 'plaque', 'nodule',
     'macule', 'pustule', 'bulla', 'scale', 'desquamation',
     'hyper-pigmentation', 'hypo-pigmentation', 'telangiectasia',
 ]
 
-SYMPTOM_SET = set(SYMPTOM_KEYWORDS)
+EVOLUTION_SET = set(EVOLUTION_KEYWORDS)
+SYMPTOM_SET   = set(SYMPTOM_KEYWORDS)
 
 
 def extract_symptoms_from_text(text: str) -> List[str]:
-    """Rule-based symptom extraction. Returns list of matched keywords."""
+    """
+    Rule-based symptom extraction for runtime keyword list.
+    Used at inference — returns matched keywords from full SYMPTOM_KEYWORDS.
+    These are passed to compute_evolution() as symptom_keywords for boost scoring.
+    """
     text_lower = text.lower()
     found = [kw for kw in SYMPTOM_KEYWORDS if kw in text_lower]
+    return found
+
+
+def extract_evolution_signals(text: str) -> List[str]:
+    """
+    Skin-specific evolution signal extraction for has_symptom TRAINING LABEL.
+    Uses tighter EVOLUTION_KEYWORDS (no bare time words, no general symptoms).
+    This ensures the symptom_head learns "skin lesion evolution" not "any clinical note".
+
+    IMPORTANT: Use this function (not extract_symptoms_from_text) to create
+    the has_symptom label in medproc_train.ipynb Cell 4.
+    """
+    text_lower = text.lower()
+    found = [kw for kw in EVOLUTION_KEYWORDS if kw in text_lower]
     return found
 
 

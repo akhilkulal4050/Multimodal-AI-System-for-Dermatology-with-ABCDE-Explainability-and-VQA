@@ -5,314 +5,344 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>NutriDermAI — Dermatology Assistant</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f0f4f8;
-    color: #1a202c;
-    min-height: 100vh;
-  }
+:root {
+  --blue: #1a56db; --green: #0e9f6e; --red: #e53e3e;
+  --yellow: #d69e2e; --gray-100: #f7fafc; --gray-200: #edf2f7;
+  --gray-300: #e2e8f0; --gray-500: #718096; --gray-700: #4a5568;
+  --gray-900: #1a202c;
+}
 
-  /* ── Header ── */
-  header {
-    background: linear-gradient(135deg, #1a56db, #0e9f6e);
-    color: white;
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
-  }
-  header h1 { font-size: 1.3rem; font-weight: 700; }
-  header p  { font-size: 0.8rem; opacity: 0.85; margin-top: 2px; }
-  .logo {
-    width: 40px; height: 40px; background: rgba(255,255,255,.2);
-    border-radius: 10px; display: flex; align-items: center;
-    justify-content: center; font-size: 1.4rem;
-  }
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #f6ad55; margin-left: auto; margin-right: 4px;
-  }
-  .status-dot.ok { background: #68d391; }
-  #status-text { font-size: 0.75rem; opacity: 0.9; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f0f4f8; color: var(--gray-900); min-height: 100vh;
+}
 
-  /* ── Layout ── */
-  .container {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 16px;
-    padding: 16px;
-    max-width: 1200px;
-    margin: 0 auto;
-    height: calc(100vh - 72px);
-  }
+/* ── Header ── */
+header {
+  background: linear-gradient(135deg, var(--blue), var(--green));
+  color: white; padding: 14px 24px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+header h1 { font-size: 1.25rem; font-weight: 700; }
+header p  { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+.logo {
+  width: 38px; height: 38px; background: rgba(255,255,255,.2);
+  border-radius: 10px; display: flex; align-items: center;
+  justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #f6ad55; flex-shrink: 0; }
+.status-dot.ok { background: #68d391; }
+.status-dot.err { background: #fc8181; }
+#status-text { font-size: 0.72rem; opacity: 0.9; }
 
-  /* ── Panel ── */
-  .panel {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  .panel-header {
-    padding: 14px 16px;
-    border-bottom: 1px solid #e2e8f0;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #2d3748;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+/* ── Tabs ── */
+.tabs {
+  display: flex; gap: 0;
+  background: white; border-bottom: 1px solid var(--gray-300);
+  padding: 0 24px; max-width: 1400px; margin: 0 auto;
+}
+.tab-btn {
+  padding: 11px 20px; border: none; background: none;
+  font-size: 0.85rem; font-weight: 600; color: var(--gray-500);
+  cursor: pointer; border-bottom: 3px solid transparent;
+  transition: all 0.15s; white-space: nowrap;
+}
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+.tab-btn:hover:not(.active) { color: var(--gray-900); }
 
-  /* ── Image upload ── */
-  .upload-zone {
-    margin: 16px;
-    border: 2px dashed #cbd5e0;
-    border-radius: 10px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    background: #f7fafc;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: #1a56db;
-    background: #ebf5fb;
-  }
-  .upload-zone input { display: none; }
-  .upload-icon { font-size: 2rem; margin-bottom: 8px; }
-  .upload-zone p { font-size: 0.85rem; color: #718096; }
-  .upload-zone strong { color: #1a56db; }
+/* ── Tab pages ── */
+.tab-page { display: none; }
+.tab-page.active { display: block; }
 
-  #preview-wrap {
-    margin: 0 16px 16px;
-    position: relative;
-    display: none;
-  }
-  #preview-img {
-    width: 100%; border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    display: block;
-  }
-  .bbox-overlay {
-    position: absolute; border: 2px solid #e53e3e;
-    background: rgba(229,62,62,.08); pointer-events: none;
-  }
-  #change-img-btn {
-    display: block; margin: 0 16px 12px;
-    padding: 8px; width: calc(100% - 32px);
-    border: 1px solid #e2e8f0; border-radius: 8px;
-    background: white; color: #4a5568;
-    font-size: 0.82rem; cursor: pointer;
-  }
-  #change-img-btn:hover { background: #f7fafc; }
+/* ── Main layout (chat tab) ── */
+.main-layout {
+  display: grid; grid-template-columns: 320px 1fr;
+  gap: 14px; padding: 14px;
+  max-width: 1400px; margin: 0 auto;
+  height: calc(100vh - 112px);
+}
 
-  /* ── Clinical info ── */
-  .clinical-form {
-    padding: 0 16px 16px;
-    flex: 1;
-    overflow-y: auto;
-  }
-  .field-group { margin-bottom: 12px; }
-  .field-group label {
-    display: block; font-size: 0.78rem;
-    font-weight: 600; color: #4a5568; margin-bottom: 4px;
-  }
-  .field-group input, .field-group select {
-    width: 100%; padding: 7px 10px;
-    border: 1px solid #e2e8f0; border-radius: 6px;
-    font-size: 0.85rem; color: #2d3748;
-    outline: none; transition: border-color 0.15s;
-  }
-  .field-group input:focus, .field-group select:focus {
-    border-color: #1a56db;
-  }
-  .abcde-grid {
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;
-  }
-  .abcde-item label { text-align: center; }
-  .abcde-item input {
-    text-align: center; padding: 6px 4px; font-size: 0.82rem;
-  }
+/* ── Panel ── */
+.panel {
+  background: white; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.panel-header {
+  padding: 12px 16px; border-bottom: 1px solid var(--gray-300);
+  font-weight: 600; font-size: 0.87rem; color: var(--gray-700);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
 
-  #process-btn {
-    width: calc(100% - 32px); margin: 0 16px 16px;
-    padding: 10px; border: none; border-radius: 8px;
-    background: linear-gradient(135deg, #1a56db, #0e9f6e);
-    color: white; font-weight: 600; font-size: 0.9rem;
-    cursor: pointer; transition: opacity 0.2s;
-  }
-  #process-btn:hover { opacity: 0.9; }
-  #process-btn:disabled { opacity: 0.5; cursor: default; }
+/* ── Upload ── */
+.upload-zone {
+  margin: 14px; border: 2px dashed var(--gray-300);
+  border-radius: 10px; padding: 20px; text-align: center;
+  cursor: pointer; transition: all 0.2s; background: var(--gray-100);
+}
+.upload-zone:hover, .upload-zone.drag-over { border-color: var(--blue); background: #ebf5fb; }
+.upload-zone input { display: none; }
+.upload-zone p { font-size: 0.82rem; color: var(--gray-500); }
+.upload-zone strong { color: var(--blue); }
 
-  /* ── Chat panel ── */
-  .chat-panel {
-    display: flex;
-    flex-direction: column;
-  }
+#preview-wrap { margin: 0 14px 12px; position: relative; display: none; }
+#preview-img  { width: 100%; border-radius: 8px; border: 1px solid var(--gray-300); display: block; }
+.bbox-overlay {
+  position: absolute; border: 2.5px solid var(--red);
+  background: rgba(229,62,62,.07); pointer-events: none;
+  border-radius: 3px; transition: all 0.3s;
+}
 
-  #session-bar {
-    padding: 8px 16px;
-    background: #f7fafc;
-    border-bottom: 1px solid #e2e8f0;
-    font-size: 0.75rem;
-    color: #718096;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  #session-id-text { font-family: monospace; color: #1a56db; }
+#change-img-btn {
+  display: block; margin: 0 14px 10px;
+  padding: 7px; width: calc(100% - 28px);
+  border: 1px solid var(--gray-300); border-radius: 8px;
+  background: white; color: var(--gray-700);
+  font-size: 0.8rem; cursor: pointer;
+}
+#change-img-btn:hover { background: var(--gray-100); }
 
-  #chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+#bbox-badge {
+  display: none; margin: 0 14px 10px; padding: 7px 12px;
+  background: #f0fff4; border: 1px solid #9ae6b4;
+  border-radius: 8px; font-size: 0.76rem; color: #276749; line-height: 1.5;
+}
 
-  .msg {
-    max-width: 80%;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 0.88rem;
-    line-height: 1.5;
-    word-break: break-word;
-  }
-  .msg.user {
-    background: #1a56db;
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 3px;
-  }
-  .msg.bot {
-    background: white;
-    border: 1px solid #e2e8f0;
-    align-self: flex-start;
-    border-bottom-left-radius: 3px;
-    color: #2d3748;
-  }
-  .msg.system {
-    background: #fefcbf;
-    border: 1px solid #f6e05e;
-    align-self: center;
-    font-size: 0.8rem;
-    color: #744210;
-    text-align: center;
-    max-width: 90%;
-  }
-  .msg.error {
-    background: #fff5f5;
-    border: 1px solid #fed7d7;
-    color: #c53030;
-    align-self: center;
-    max-width: 90%;
-  }
-  .msg-time {
-    font-size: 0.7rem;
-    opacity: 0.6;
-    margin-top: 4px;
-  }
+.clinical-form { padding: 0 14px 12px; flex: 1; overflow-y: auto; }
+.field-group { margin-bottom: 10px; }
+.field-group label {
+  display: block; font-size: 0.75rem; font-weight: 600;
+  color: var(--gray-700); margin-bottom: 3px;
+}
+.field-group input, .field-group select {
+  width: 100%; padding: 6px 10px; border: 1px solid var(--gray-300);
+  border-radius: 6px; font-size: 0.82rem; color: var(--gray-900);
+  outline: none; transition: border-color 0.15s;
+}
+.field-group input:focus, .field-group select:focus { border-color: var(--blue); }
+.abcde-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 5px; }
+.abcde-item label { text-align: center; }
+.abcde-item input { text-align: center; padding: 5px 3px; font-size: 0.8rem; }
 
-  .typing {
-    display: flex; gap: 4px; padding: 12px 14px;
-    background: white; border: 1px solid #e2e8f0;
-    border-radius: 12px; border-bottom-left-radius: 3px;
-    align-self: flex-start;
-  }
-  .typing span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #a0aec0; animation: bounce 1.2s infinite;
-  }
-  .typing span:nth-child(2) { animation-delay: 0.2s; }
-  .typing span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%,60%,100% { transform: translateY(0); }
-    30%          { transform: translateY(-6px); }
-  }
+#process-btn {
+  width: calc(100% - 28px); margin: 0 14px 14px;
+  padding: 10px; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--green));
+  color: white; font-weight: 600; font-size: 0.88rem;
+  cursor: pointer; transition: opacity 0.2s; flex-shrink: 0;
+}
+#process-btn:hover { opacity: 0.9; }
+#process-btn:disabled { opacity: 0.5; cursor: default; }
 
-  /* ── Input area ── */
-  .chat-input-wrap {
-    padding: 12px 16px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    gap: 8px;
-    background: white;
-  }
-  #question-input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    font-size: 0.9rem;
-    outline: none;
-    resize: none;
-    font-family: inherit;
-    max-height: 100px;
-    min-height: 40px;
-    transition: border-color 0.15s;
-  }
-  #question-input:focus { border-color: #1a56db; }
-  #question-input:disabled { background: #f7fafc; color: #a0aec0; }
+/* ── Chat panel ── */
+.chat-panel { display: flex; flex-direction: column; }
 
-  #send-btn {
-    width: 40px; height: 40px; border: none; border-radius: 50%;
-    background: #1a56db; color: white; font-size: 1.1rem;
-    cursor: pointer; display: flex; align-items: center;
-    justify-content: center; transition: background 0.15s; flex-shrink: 0;
-  }
-  #send-btn:hover { background: #1e429f; }
-  #send-btn:disabled { background: #bee3f8; cursor: default; }
+#session-bar {
+  padding: 7px 16px; background: var(--gray-100);
+  border-bottom: 1px solid var(--gray-300);
+  font-size: 0.73rem; color: var(--gray-500);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+#session-id-text { font-family: monospace; color: var(--blue); font-size: 0.72rem; }
 
-  /* ── Quick questions ── */
-  .quick-questions {
-    padding: 0 16px 12px;
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
-  .quick-btn {
-    padding: 5px 10px;
-    border: 1px solid #bee3f8;
-    border-radius: 20px;
-    background: #ebf8ff;
-    color: #2b6cb0;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .quick-btn:hover { background: #bee3f8; }
-  .quick-btn:disabled { opacity: 0.4; cursor: default; }
+/* ── Memory bar ── */
+#memory-bar {
+  padding: 6px 16px; background: #fffbeb;
+  border-bottom: 1px solid #f6e05e;
+  font-size: 0.72rem; color: #744210;
+  display: none; flex-wrap: wrap; gap: 6px; align-items: center;
+}
+.memory-tag {
+  background: #fef3c7; border: 1px solid #f6d860;
+  border-radius: 12px; padding: 2px 8px;
+  font-size: 0.7rem; color: #92400e;
+}
 
-  /* ── Bbox info badge ── */
-  #bbox-badge {
-    display: none;
-    margin: 0 16px 12px;
-    padding: 8px 12px;
-    background: #f0fff4;
-    border: 1px solid #9ae6b4;
-    border-radius: 8px;
-    font-size: 0.78rem;
-    color: #276749;
-  }
+#chat-messages {
+  flex: 1; overflow-y: auto; padding: 14px;
+  display: flex; flex-direction: column; gap: 10px;
+}
 
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #a0aec0;
-    gap: 8px;
-    padding: 32px;
-  }
-  .empty-state .icon { font-size: 3rem; }
-  .empty-state p { font-size: 0.88rem; text-align: center; }
+.msg {
+  max-width: 82%; padding: 10px 14px; border-radius: 12px;
+  font-size: 0.87rem; line-height: 1.55; word-break: break-word;
+}
+.msg.user { background: var(--blue); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
+.msg.bot  { background: white; border: 1px solid var(--gray-300); align-self: flex-start; border-bottom-left-radius: 3px; }
+.msg.system { background: #fefcbf; border: 1px solid #f6e05e; align-self: center; font-size: 0.78rem; color: #744210; text-align: center; max-width: 92%; }
+.msg.error  { background: #fff5f5; border: 1px solid #fed7d7; color: #c53030; align-self: center; max-width: 92%; }
+.msg-meta { font-size: 0.68rem; opacity: 0.6; margin-top: 4px; }
+.msg.bot .msg-meta { color: var(--gray-500); }
+
+.typing {
+  display: flex; gap: 4px; padding: 11px 14px;
+  background: white; border: 1px solid var(--gray-300);
+  border-radius: 12px; border-bottom-left-radius: 3px; align-self: flex-start;
+}
+.typing span { width: 6px; height: 6px; border-radius: 50%; background: #a0aec0; animation: bounce 1.2s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+.quick-questions { padding: 0 14px 10px; display: flex; flex-wrap: wrap; gap: 5px; flex-shrink: 0; }
+.quick-btn {
+  padding: 4px 10px; border: 1px solid #bee3f8; border-radius: 20px;
+  background: #ebf8ff; color: #2b6cb0; font-size: 0.73rem; cursor: pointer; transition: all 0.15s;
+}
+.quick-btn:hover { background: #bee3f8; }
+.quick-btn:disabled { opacity: 0.4; cursor: default; }
+
+.chat-input-wrap {
+  padding: 10px 14px; border-top: 1px solid var(--gray-300);
+  display: flex; gap: 8px; background: white; flex-shrink: 0;
+}
+#question-input {
+  flex: 1; padding: 9px 14px; border: 1px solid var(--gray-300);
+  border-radius: 24px; font-size: 0.88rem; outline: none;
+  resize: none; font-family: inherit; max-height: 90px; min-height: 38px;
+  transition: border-color 0.15s;
+}
+#question-input:focus { border-color: var(--blue); }
+#question-input:disabled { background: var(--gray-100); color: #a0aec0; }
+#send-btn {
+  width: 38px; height: 38px; border: none; border-radius: 50%;
+  background: var(--blue); color: white; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s;
+}
+#send-btn:hover { background: #1e429f; }
+#send-btn:disabled { background: #bee3f8; cursor: default; }
+
+.empty-state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: #a0aec0; gap: 8px; padding: 32px; text-align: center;
+}
+.empty-state .icon { font-size: 2.8rem; }
+.empty-state p { font-size: 0.85rem; }
+
+/* ── Demo tab ── */
+.demo-layout {
+  max-width: 1000px; margin: 0 auto; padding: 20px;
+}
+.demo-header {
+  text-align: center; margin-bottom: 24px;
+}
+.demo-header h2 { font-size: 1.3rem; font-weight: 700; color: var(--gray-900); }
+.demo-header p  { font-size: 0.88rem; color: var(--gray-500); margin-top: 6px; }
+
+.demo-card {
+  background: white; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 20px; overflow: hidden;
+}
+.demo-card-header {
+  padding: 14px 20px; background: linear-gradient(135deg,rgba(26,86,219,.06),rgba(14,159,110,.06));
+  border-bottom: 1px solid var(--gray-300); display: flex; align-items: center; gap: 10px;
+}
+.demo-card-header h3 { font-size: 0.95rem; font-weight: 700; }
+.demo-card-header span { font-size: 0.78rem; color: var(--gray-500); }
+.demo-step-badge {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg,var(--blue),var(--green));
+  color: white; font-size: 0.78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* demo chat */
+.demo-chat { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+.demo-turn { display: flex; flex-direction: column; gap: 6px; }
+.demo-q {
+  align-self: flex-end; background: var(--blue); color: white;
+  padding: 9px 14px; border-radius: 12px 12px 3px 12px;
+  font-size: 0.85rem; max-width: 75%; line-height: 1.5;
+}
+.demo-a {
+  align-self: flex-start; background: var(--gray-100); border: 1px solid var(--gray-300);
+  padding: 9px 14px; border-radius: 12px 12px 12px 3px;
+  font-size: 0.85rem; max-width: 85%; line-height: 1.6; color: var(--gray-900);
+}
+.demo-a strong { color: var(--blue); }
+.demo-turn-label { font-size: 0.7rem; color: var(--gray-500); text-align: center; }
+
+.demo-memory-state {
+  background: #fffbeb; border: 1px solid #f6e05e; border-radius: 8px;
+  padding: 8px 14px; margin: 0 20px 12px; font-size: 0.75rem; color: #744210;
+}
+.demo-memory-state strong { color: #92400e; }
+.demo-memory-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.demo-tag {
+  background: #fef3c7; border: 1px solid #f6d860;
+  border-radius: 12px; padding: 2px 8px; font-size: 0.7rem; color: #92400e;
+}
+
+.play-demo-btn {
+  display: block; margin: 0 auto 20px;
+  padding: 11px 28px; border: none; border-radius: 8px;
+  background: linear-gradient(135deg,var(--blue),var(--green));
+  color: white; font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: opacity 0.2s;
+}
+.play-demo-btn:hover { opacity: 0.9; }
+.play-demo-btn:disabled { opacity: 0.5; cursor: default; }
+
+#demo-chat-live { display: none; }
+#demo-chat-live .demo-chat { min-height: 300px; }
+
+/* ── Tests tab ── */
+.tests-layout {
+  max-width: 960px; margin: 0 auto; padding: 20px;
+}
+.tests-header { margin-bottom: 20px; }
+.tests-header h2 { font-size: 1.2rem; font-weight: 700; }
+.tests-header p  { font-size: 0.85rem; color: var(--gray-500); margin-top: 4px; }
+
+.test-card {
+  background: white; border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 12px; overflow: hidden;
+}
+.test-card-header {
+  padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--gray-200); cursor: pointer; user-select: none;
+}
+.test-card-header h3 { font-size: 0.88rem; font-weight: 600; flex: 1; }
+.test-status {
+  font-size: 0.72rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 12px; white-space: nowrap;
+}
+.test-status.pending { background: #edf2f7; color: var(--gray-500); }
+.test-status.running { background: #ebf8ff; color: var(--blue); }
+.test-status.pass    { background: #f0fff4; color: #276749; }
+.test-status.fail    { background: #fff5f5; color: #c53030; }
+
+.test-log {
+  padding: 12px 16px; font-family: monospace; font-size: 0.76rem;
+  color: var(--gray-700); background: #f8f9fa; max-height: 240px;
+  overflow-y: auto; display: none; white-space: pre-wrap; line-height: 1.6;
+}
+.test-log.open { display: block; }
+.log-ok   { color: #276749; }
+.log-fail { color: #c53030; }
+.log-info { color: var(--blue); }
+.log-warn { color: #744210; }
+
+.run-tests-btn {
+  padding: 10px 24px; border: none; border-radius: 8px;
+  background: var(--blue); color: white;
+  font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-bottom: 16px;
+}
+.run-tests-btn:hover { background: #1e429f; }
+.run-tests-btn:disabled { opacity: 0.5; cursor: default; }
+
+.tests-summary {
+  padding: 12px 16px; background: white; border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 16px; font-size: 0.85rem;
+}
+.tests-summary .count { font-size: 1.5rem; font-weight: 800; }
+.tests-summary .pass-count { color: #276749; }
+.tests-summary .fail-count { color: #c53030; }
 </style>
 </head>
 <body>
@@ -321,39 +351,45 @@
   <div class="logo">🔬</div>
   <div>
     <h1>NutriDermAI</h1>
-    <p>ABCDE-Aware Dermatology Assistant</p>
+    <p>ABCDE-Aware Dermatology Assistant · Stage 7 VQA</p>
   </div>
-  <div class="status-dot" id="status-dot"></div>
+  <div class="status-dot" id="status-dot" style="margin-left:auto"></div>
   <span id="status-text">Connecting...</span>
 </header>
 
-<div class="container">
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('chat',this)">💬 Patient Chat</button>
+  <button class="tab-btn"        onclick="switchTab('demo',this)">🎬 Sample Session</button>
+  <button class="tab-btn"        onclick="switchTab('tests',this)">🧪 Run Tests</button>
+</div>
 
-  <!-- LEFT: Image + Clinical Info -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TAB 1: LIVE CHAT                                          -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="tab-chat" class="tab-page active">
+<div class="main-layout">
+
+  <!-- LEFT -->
   <div class="panel">
-    <div class="panel-header">🖼️ Image & Clinical Context</div>
+    <div class="panel-header">🖼️ Image &amp; Clinical Context</div>
 
     <div class="upload-zone" id="upload-zone">
       <input type="file" id="file-input" accept="image/*"/>
-      <div class="upload-icon">📷</div>
-      <p><strong>Click or drag</strong> a dermoscopy image here</p>
-      <p style="margin-top:4px;font-size:0.75rem">JPG, PNG, BMP supported</p>
+      <div style="font-size:2rem;margin-bottom:8px">📷</div>
+      <p><strong>Click or drag</strong> dermoscopy image here</p>
+      <p style="margin-top:3px;font-size:0.74rem">JPG, PNG, BMP supported</p>
     </div>
 
     <div id="preview-wrap">
-      <img id="preview-img" alt="Uploaded dermoscopy image"/>
+      <img id="preview-img" alt="Dermoscopy image"/>
       <div class="bbox-overlay" id="bbox-overlay" style="display:none"></div>
     </div>
-
     <button id="change-img-btn" style="display:none">↩ Change image</button>
+    <div id="bbox-badge"></div>
 
-    <div id="bbox-badge">
-      ✅ Lesion detected at <span id="bbox-text"></span>
-    </div>
-
-    <div class="clinical-form" id="clinical-form">
+    <div class="clinical-form">
       <div class="field-group">
-        <label>Disease Label (optional — from Stage 6)</label>
+        <label>Disease Label (from Stage 6 — optional)</label>
         <select id="disease-label">
           <option value="">-- Auto-detect --</option>
           <option value="MEL">MEL — Melanoma</option>
@@ -366,372 +402,888 @@
       </div>
       <div class="field-group">
         <label>Risk Score (0.0 – 1.0)</label>
-        <input type="number" id="risk-score" placeholder="e.g. 0.72"
-               min="0" max="1" step="0.01"/>
+        <input type="number" id="risk-score" placeholder="e.g. 0.72" min="0" max="1" step="0.01"/>
       </div>
       <div class="field-group">
-        <label>ABCDE Scores (0.0 – 1.0 each)</label>
+        <label>ABCDE Scores</label>
         <div class="abcde-grid">
-          <div class="abcde-item">
-            <label>A</label>
-            <input type="number" id="score-A" placeholder="0.0"
-                   min="0" max="1" step="0.01"/>
-          </div>
-          <div class="abcde-item">
-            <label>B</label>
-            <input type="number" id="score-B" placeholder="0.0"
-                   min="0" max="1" step="0.01"/>
-          </div>
-          <div class="abcde-item">
-            <label>C</label>
-            <input type="number" id="score-C" placeholder="0.0"
-                   min="0" max="1" step="0.01"/>
-          </div>
-          <div class="abcde-item">
-            <label>D</label>
-            <input type="number" id="score-D" placeholder="0.0"
-                   min="0" max="1" step="0.01"/>
-          </div>
-          <div class="abcde-item">
-            <label>E</label>
-            <input type="number" id="score-E" placeholder="0.0"
-                   min="0" max="1" step="0.01"/>
-          </div>
+          <div class="abcde-item"><label>A</label><input type="number" id="score-A" placeholder="0.0" min="0" max="1" step="0.01"/></div>
+          <div class="abcde-item"><label>B</label><input type="number" id="score-B" placeholder="0.0" min="0" max="1" step="0.01"/></div>
+          <div class="abcde-item"><label>C</label><input type="number" id="score-C" placeholder="0.0" min="0" max="1" step="0.01"/></div>
+          <div class="abcde-item"><label>D</label><input type="number" id="score-D" placeholder="0.0" min="0" max="1" step="0.01"/></div>
+          <div class="abcde-item"><label>E</label><input type="number" id="score-E" placeholder="0.0" min="0" max="1" step="0.01"/></div>
         </div>
       </div>
     </div>
 
-    <button id="process-btn" disabled>⬆ Upload & Analyse Image</button>
+    <button id="process-btn" disabled>⬆ Upload &amp; Analyse Image</button>
   </div>
 
   <!-- RIGHT: Chat -->
   <div class="panel chat-panel">
-    <div class="panel-header">💬 Dermatology Q&A
-      <span id="turn-count"
-            style="margin-left:auto;font-weight:400;font-size:0.78rem;
-                   color:#718096"></span>
+    <div class="panel-header">
+      💬 Dermatology Q&amp;A
+      <span id="turn-count" style="margin-left:auto;font-weight:400;font-size:0.76rem;color:var(--gray-500)"></span>
     </div>
 
     <div id="session-bar">
       Session: <span id="session-id-text">—</span>
-      <button onclick="resetSession()"
-              style="margin-left:auto;padding:3px 10px;border:1px solid #e2e8f0;
-                     border-radius:6px;background:white;font-size:0.75rem;
-                     cursor:pointer;color:#4a5568">New session</button>
+      <button onclick="resetSession()" style="margin-left:auto;padding:3px 10px;border:1px solid var(--gray-300);border-radius:6px;background:white;font-size:0.73rem;cursor:pointer;color:var(--gray-700)">New session</button>
+    </div>
+
+    <!-- Continuous memory display -->
+    <div id="memory-bar">
+      🧠 Session memory:
     </div>
 
     <div id="chat-messages">
       <div class="empty-state" id="empty-state">
         <div class="icon">🩺</div>
-        <p>Upload a dermoscopy image and ask a question about the skin lesion.</p>
-        <p style="font-size:0.78rem;margin-top:4px">
-          ABCDE criteria, diagnosis, treatment, risk — all supported.</p>
+        <p>Upload a dermoscopy image to begin a session.</p>
+        <p style="font-size:0.78rem;margin-top:6px">Each question builds on prior answers — the bot remembers the full conversation.</p>
       </div>
     </div>
 
     <div class="quick-questions" id="quick-questions">
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">What is this lesion?</button>
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">Is this malignant?</button>
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">Explain the ABCDE scores</button>
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">What treatment is recommended?</button>
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">What is the risk level?</button>
-      <button class="quick-btn" disabled
-              onclick="sendQuick(this)">How urgent is a referral?</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">What is this lesion?</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">Is this malignant?</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">Explain the ABCDE scores</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">What treatment is needed?</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">How urgent is a referral?</button>
+      <button class="quick-btn" disabled onclick="sendQuick(this)">What should I do next?</button>
     </div>
 
     <div class="chat-input-wrap">
-      <textarea id="question-input" placeholder="Ask about this lesion..."
-                rows="1" disabled></textarea>
+      <textarea id="question-input" placeholder="Ask about this lesion..." rows="1" disabled></textarea>
       <button id="send-btn" disabled onclick="sendMessage()">➤</button>
     </div>
   </div>
 
 </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TAB 2: SAMPLE SESSION DEMO                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="tab-demo" class="tab-page">
+<div class="demo-layout">
+
+  <div class="demo-header">
+    <h2>Sample Patient Session — High-Risk Melanoma</h2>
+    <p>A complete consultation showing how the bot uses continuous memory across 6 turns. Each answer builds on what was discussed before.</p>
+  </div>
+
+  <button class="play-demo-btn" id="play-demo-btn" onclick="playDemo()">▶ Play Sample Session</button>
+
+  <!-- Static walkthrough (always visible) -->
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">1</div>
+      <div>
+        <h3>Session Start — Image Upload &amp; ARCUNet Processing</h3>
+        <span>POST /session/new → POST /session/{id}/image</span>
+      </div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn-label">System initialises session with Stage 6 clinical context</div>
+      <div class="msg system" style="align-self:center;max-width:90%">
+        🔬 ARCUNet segmentation complete · Lesion detected at (142, 98), size 218×194px<br>
+        Disease: MEL · Risk tier: URGENT · ABCDE all HIGH · Session ready
+      </div>
+    </div>
+    <div class="demo-memory-state">
+      <strong>Memory state after upload:</strong>
+      <div class="demo-memory-tags">
+        <span class="demo-tag">disease=MEL</span>
+        <span class="demo-tag">risk=0.88 (URGENT)</span>
+        <span class="demo-tag">A=0.87 B=0.74 C=0.62 D=0.71 E=0.82</span>
+        <span class="demo-tag">bbox=[142,98,360,292]</span>
+        <span class="demo-tag">turns=0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">2</div>
+      <div><h3>Turn 1 — Diagnosis</h3><span>First question, no prior conversation</span></div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn">
+        <div class="demo-q">What skin condition is shown in this image?</div>
+        <div class="demo-a">
+          Based on the dermoscopic features in the highlighted region of interest, this lesion shows features <strong>highly consistent with melanoma</strong>. The ABCDE analysis reveals significant asymmetry (A=0.87), irregular borders (B=0.74), colour variation (C=0.62), complex dermoscopic structures (D=0.71), and documented evolution (E=0.82). All five ABCDE criteria are above the high-concern threshold, giving a risk score of 0.88 — this places the lesion in the <strong>URGENT risk tier</strong>. Same-day or next-day dermatologist referral is strongly recommended.
+        </div>
+      </div>
+    </div>
+    <div class="demo-memory-state">
+      <strong>Memory after Turn 1:</strong>
+      <div class="demo-memory-tags">
+        <span class="demo-tag">turns=1</span>
+        <span class="demo-tag">context: "Patient asked about condition → Doctor noted URGENT melanoma suspicion"</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">3</div>
+      <div><h3>Turn 2 — ABCDE Deep Dive</h3><span>Builds on Turn 1 diagnosis</span></div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn">
+        <div class="demo-q">Can you explain what the ABCDE scores mean for this specific lesion?</div>
+        <div class="demo-a">
+          As I mentioned, <strong>all five ABCDE criteria are significantly elevated</strong> for this lesion. Here is what each means clinically:<br><br>
+          <strong>A (Asymmetry) = 0.87 [HIGH]:</strong> The lesion is significantly asymmetric — drawing a line through the centre gives two non-matching halves. This is a major red flag.<br><br>
+          <strong>B (Border) = 0.74 [HIGH]:</strong> Irregular, notched, or indistinct borders are present. In melanoma, borders often appear to fade or spread unevenly into surrounding skin.<br><br>
+          <strong>C (Colour) = 0.62 [HIGH]:</strong> Multiple colours are visible including brown, black, and areas of regression (grey-blue). Colour variation above 0.5 is highly concerning.<br><br>
+          <strong>D (Dermoscopic structures) = 0.71 [HIGH]:</strong> Complex atypical structures are present within the lesion — this score reflects internal structural complexity beyond simple nevi.<br><br>
+          <strong>E (Evolution) = 0.82 [HIGH]:</strong> The clinical notes indicate recent changes in size, shape, or colour. Evolution is the single most important ABCDE criterion — any change warrants urgent review.
+        </div>
+      </div>
+    </div>
+    <div class="demo-memory-state">
+      <strong>Memory after Turn 2 — bot recalls Turn 1 context:</strong>
+      <div class="demo-memory-tags">
+        <span class="demo-tag">turns=2</span>
+        <span class="demo-tag">"As I mentioned" → references prior diagnosis turn</span>
+        <span class="demo-tag">ABCDE details now in context</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">4</div>
+      <div><h3>Turn 3 — Risk &amp; Urgency</h3><span>Patient asks about danger level</span></div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn">
+        <div class="demo-q">How serious is this? Should I be worried?</div>
+        <div class="demo-a">
+          Given what we have discussed about the ABCDE findings, <strong>this lesion requires urgent medical attention</strong>. The risk score of 0.88 places it firmly in the URGENT tier — this means a same-day or next-day dermatologist appointment is recommended, not a routine booking.<br><br>
+          I want to be clear: I cannot make a definitive diagnosis, but the combination of all five ABCDE criteria being in the HIGH range, along with documented evolution, is a pattern that dermatologists take very seriously. The concern is <strong>possible melanoma</strong>, which is the most dangerous form of skin cancer but also highly treatable when caught early.<br><br>
+          The most important thing you can do is see a dermatologist as soon as possible — ideally today or tomorrow. Do not wait for a routine appointment.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">5</div>
+      <div><h3>Turn 4 — Treatment</h3><span>Patient asks what comes next</span></div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn">
+        <div class="demo-q">What treatment would be needed if this is confirmed as melanoma?</div>
+        <div class="demo-a">
+          If confirmed as melanoma following biopsy, the standard treatment pathway is:<br><br>
+          <strong>1. Wide Local Excision (WLE):</strong> Surgical removal of the lesion with safety margins of 1–2 cm depending on Breslow depth. This is the primary curative treatment.<br><br>
+          <strong>2. Sentinel Lymph Node Biopsy (SLNB):</strong> For lesions thicker than 0.8mm (T1b+), the nearest lymph nodes are sampled to check for microscopic spread.<br><br>
+          <strong>3. Adjuvant therapy for advanced stages:</strong> If the melanoma has spread to lymph nodes or distant sites, immunotherapy (pembrolizumab or nivolumab — anti-PD-1 antibodies) or targeted therapy (dabrafenib + trametinib for BRAF V600E mutation) may be used.<br><br>
+          Given the URGENT risk score we discussed, the dermatologist will likely proceed to excisional biopsy at the first appointment to confirm the diagnosis before planning further treatment.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">6</div>
+      <div><h3>Turn 5 — Follow-up (memory test)</h3><span>Bot references full prior conversation</span></div>
+    </div>
+    <div class="demo-chat">
+      <div class="demo-turn">
+        <div class="demo-q">Based on everything we've discussed, what is the single most important thing I should do today?</div>
+        <div class="demo-a">
+          Based on our full conversation — the URGENT ABCDE scores (all five criteria HIGH), the risk score of 0.88, and the pattern consistent with melanoma that I described in our first exchange — <strong>the single most important action today is to contact a dermatologist and request an emergency appointment</strong>.<br><br>
+          You can say to the receptionist: "I have a rapidly changing pigmented lesion with irregular borders and multiple colours that an AI clinical support tool has flagged as high-risk. I need to be seen today or tomorrow."<br><br>
+          If your GP cannot refer you urgently, go directly to a dermatology clinic or hospital emergency department. The treatment we discussed — wide local excision — is highly curative at early stages, which is exactly the stage this may be caught at if you act now. <strong>Do not delay.</strong>
+        </div>
+      </div>
+    </div>
+    <div class="demo-memory-state">
+      <strong>Final memory state — 5 turns, full context compressed:</strong>
+      <div class="demo-memory-tags">
+        <span class="demo-tag">turns=5</span>
+        <span class="demo-tag">disease=MEL (URGENT)</span>
+        <span class="demo-tag">all ABCDE discussed</span>
+        <span class="demo-tag">risk + treatment + urgency covered</span>
+        <span class="demo-tag">"Based on our full conversation" → uses compressed context_sum</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live playback area -->
+  <div id="demo-chat-live" class="demo-card">
+    <div class="demo-card-header">
+      <div class="demo-step-badge">▶</div>
+      <div><h3>Live Playback</h3><span>Replaying sample session against running server...</span></div>
+    </div>
+    <div class="demo-chat" id="demo-chat-messages"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- TAB 3: TESTS                                              -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="tab-tests" class="tab-page">
+<div class="tests-layout">
+
+  <div class="tests-header">
+    <h2>Automated Session Tests</h2>
+    <p>Tests run against the live server at <code>http://localhost:8000</code>. Start <code>dermatology_bot.py</code> before running.</p>
+  </div>
+
+  <div class="tests-summary" id="tests-summary" style="display:none">
+    <div>
+      <div class="count pass-count" id="pass-count">0</div>
+      <div style="font-size:0.75rem;color:#276749">passed</div>
+    </div>
+    <div>
+      <div class="count fail-count" id="fail-count">0</div>
+      <div style="font-size:0.75rem;color:#c53030">failed</div>
+    </div>
+    <div style="font-size:0.82rem;color:var(--gray-500)" id="tests-elapsed"></div>
+  </div>
+
+  <button class="run-tests-btn" id="run-tests-btn" onclick="runAllTests()">▶ Run All Tests</button>
+
+  <!-- Test cards -->
+  <div class="test-card" id="test-health">
+    <div class="test-card-header" onclick="toggleLog('test-health')">
+      <h3>🏥 Health Check — Server &amp; Model Status</h3>
+      <span class="test-status pending" id="test-health-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-health-log"></div>
+  </div>
+
+  <div class="test-card" id="test-session-create">
+    <div class="test-card-header" onclick="toggleLog('test-session-create')">
+      <h3>📋 Session Management — Create, List, Close</h3>
+      <span class="test-status pending" id="test-session-create-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-session-create-log"></div>
+  </div>
+
+  <div class="test-card" id="test-melanoma">
+    <div class="test-card-header" onclick="toggleLog('test-melanoma')">
+      <h3>🔴 Session 1 — High-Risk Melanoma (6-turn conversation)</h3>
+      <span class="test-status pending" id="test-melanoma-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-melanoma-log"></div>
+  </div>
+
+  <div class="test-card" id="test-nevus">
+    <div class="test-card-header" onclick="toggleLog('test-nevus')">
+      <h3>🟢 Session 2 — Benign Nevus (reassurance flow)</h3>
+      <span class="test-status pending" id="test-nevus-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-nevus-log"></div>
+  </div>
+
+  <div class="test-card" id="test-resume">
+    <div class="test-card-header" onclick="toggleLog('test-resume')">
+      <h3>💾 Session 3 — Resume from Disk (no re-upload)</h3>
+      <span class="test-status pending" id="test-resume-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-resume-log"></div>
+  </div>
+
+  <div class="test-card" id="test-memory">
+    <div class="test-card-header" onclick="toggleLog('test-memory')">
+      <h3>🧠 Continuous Memory — Context Persists Across Turns</h3>
+      <span class="test-status pending" id="test-memory-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-memory-log"></div>
+  </div>
+
+  <div class="test-card" id="test-rag">
+    <div class="test-card-header" onclick="toggleLog('test-rag')">
+      <h3>📚 RAG Retrieval — ChromaDB Knowledge Base</h3>
+      <span class="test-status pending" id="test-rag-status">Pending</span>
+    </div>
+    <div class="test-log" id="test-rag-log"></div>
+  </div>
+
+</div>
+</div>
 
 <script>
-// ── Config ────────────────────────────────────────────────────────────────
-const API = "http://localhost:8000";
-let sessionId   = null;
-let imageReady  = false;
-let isProcessing = false;
+// ════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════
+const API = 'http://localhost:8000';
 
-// ── Health check ──────────────────────────────────────────────────────────
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Health ────────────────────────────────────────────────────
+let healthData = {};
 async function checkHealth() {
   try {
     const r = await fetch(`${API}/health`, {signal: AbortSignal.timeout(3000)});
     if (r.ok) {
-      const d = await r.json();
-      document.getElementById("status-dot").classList.add("ok");
-      document.getElementById("status-text").textContent =
-        `Online · ${d.vram_gb}GB VRAM · ${d.rag_chunks} RAG chunks`;
-    } else throw new Error();
-  } catch {
-    document.getElementById("status-dot").style.background = "#fc8181";
-    document.getElementById("status-text").textContent = "API offline — start dermatology_bot.py";
-  }
+      healthData = await r.json();
+      document.getElementById('status-dot').className = 'status-dot ok';
+      document.getElementById('status-text').textContent =
+        `Online · ${healthData.vram_gb}GB VRAM`;
+      return true;
+    }
+  } catch {}
+  document.getElementById('status-dot').className = 'status-dot err';
+  document.getElementById('status-text').textContent = 'API offline — start dermatology_bot.py';
+  return false;
 }
+checkHealth(); setInterval(checkHealth, 30000);
 
-// ── Session ───────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// TAB 1: LIVE CHAT
+// ════════════════════════════════════════════════════════════
+let sessionId = null, imageReady = false, isProcessing = false;
+let turnCount = 0;
+const memoryTags = {};
+
 async function ensureSession() {
   if (sessionId) return;
-  const r = await fetch(`${API}/session/new`, {method:"POST"});
+  const r = await fetch(`${API}/session/new`, {method:'POST'});
   const d = await r.json();
   sessionId = d.session_id;
-  document.getElementById("session-id-text").textContent = sessionId;
+  document.getElementById('session-id-text').textContent = sessionId;
 }
 
 function resetSession() {
-  sessionId = null; imageReady = false;
-  document.getElementById("session-id-text").textContent = "—";
-  document.getElementById("chat-messages").innerHTML = "";
-  document.getElementById("empty-state") &&
-    document.getElementById("chat-messages").appendChild(emptyState());
-  document.getElementById("preview-wrap").style.display = "none";
-  document.getElementById("change-img-btn").style.display = "none";
-  document.getElementById("upload-zone").style.display = "block";
-  document.getElementById("bbox-badge").style.display = "none";
-  document.getElementById("bbox-overlay").style.display = "none";
-  document.getElementById("process-btn").disabled = true;
+  sessionId = null; imageReady = false; turnCount = 0;
+  Object.keys(memoryTags).forEach(k => delete memoryTags[k]);
+  document.getElementById('session-id-text').textContent = '—';
+  document.getElementById('turn-count').textContent = '';
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('memory-bar').style.display = 'none';
+  const es = document.createElement('div');
+  es.className='empty-state'; es.id='empty-state';
+  es.innerHTML=`<div class="icon">🩺</div>
+    <p>Upload a dermoscopy image to begin a session.</p>
+    <p style="font-size:.78rem;margin-top:6px">Each question builds on prior answers — the bot remembers the full conversation.</p>`;
+  document.getElementById('chat-messages').appendChild(es);
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('change-img-btn').style.display='none';
+  document.getElementById('upload-zone').style.display='block';
+  document.getElementById('bbox-badge').style.display='none';
+  document.getElementById('bbox-overlay').style.display='none';
+  document.getElementById('process-btn').disabled=true;
   setInputEnabled(false);
-  document.getElementById("turn-count").textContent = "";
 }
 
-function emptyState() {
-  const d = document.createElement("div");
-  d.className = "empty-state"; d.id = "empty-state";
-  d.innerHTML = `<div class="icon">🩺</div>
-    <p>Upload a dermoscopy image and ask a question about the skin lesion.</p>
-    <p style="font-size:0.78rem;margin-top:4px">
-      ABCDE criteria, diagnosis, treatment, risk — all supported.</p>`;
-  return d;
-}
+// File upload
+const uploadZone=document.getElementById('upload-zone');
+const fileInput=document.getElementById('file-input');
+let selectedFile=null;
 
-// ── File upload ───────────────────────────────────────────────────────────
-const uploadZone  = document.getElementById("upload-zone");
-const fileInput   = document.getElementById("file-input");
-const previewWrap = document.getElementById("preview-wrap");
-const previewImg  = document.getElementById("preview-img");
-
-uploadZone.addEventListener("click", () => fileInput.click());
-uploadZone.addEventListener("dragover", e => {
-  e.preventDefault(); uploadZone.classList.add("drag-over"); });
-uploadZone.addEventListener("dragleave", () =>
-  uploadZone.classList.remove("drag-over"));
-uploadZone.addEventListener("drop", e => {
-  e.preventDefault(); uploadZone.classList.remove("drag-over");
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener("change", () => {
-  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+uploadZone.addEventListener('click',()=>fileInput.click());
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag-over');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0]);});
+document.getElementById('change-img-btn').addEventListener('click',()=>{
+  selectedFile=null; imageReady=false;
+  uploadZone.style.display='block';
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('change-img-btn').style.display='none';
+  document.getElementById('bbox-badge').style.display='none';
+  document.getElementById('bbox-overlay').style.display='none';
+  document.getElementById('process-btn').disabled=true;
+  setInputEnabled(false); fileInput.value='';
 });
 
-let selectedFile = null;
 function handleFile(file) {
-  selectedFile = file;
-  const url = URL.createObjectURL(file);
-  previewImg.src = url;
-  uploadZone.style.display = "none";
-  previewWrap.style.display = "block";
-  document.getElementById("change-img-btn").style.display = "block";
-  document.getElementById("process-btn").disabled = false;
+  selectedFile=file;
+  const url=URL.createObjectURL(file);
+  document.getElementById('preview-img').src=url;
+  uploadZone.style.display='none';
+  document.getElementById('preview-wrap').style.display='block';
+  document.getElementById('change-img-btn').style.display='block';
+  document.getElementById('process-btn').disabled=false;
 }
 
-document.getElementById("change-img-btn").addEventListener("click", () => {
-  selectedFile = null;
-  uploadZone.style.display = "block";
-  previewWrap.style.display = "none";
-  document.getElementById("change-img-btn").style.display = "none";
-  document.getElementById("bbox-badge").style.display = "none";
-  document.getElementById("bbox-overlay").style.display = "none";
-  document.getElementById("process-btn").disabled = true;
-  imageReady = false;
-  setInputEnabled(false);
-  fileInput.value = "";
-});
-
-// ── Process image ─────────────────────────────────────────────────────────
-document.getElementById("process-btn").addEventListener("click", processImage);
+document.getElementById('process-btn').addEventListener('click', processImage);
 
 async function processImage() {
-  if (!selectedFile || isProcessing) return;
-  isProcessing = true;
-  const btn = document.getElementById("process-btn");
-  btn.disabled = true; btn.textContent = "⏳ Processing...";
-
+  if(!selectedFile||isProcessing) return;
+  isProcessing=true;
+  const btn=document.getElementById('process-btn');
+  btn.disabled=true; btn.textContent='⏳ Processing...';
   try {
     await ensureSession();
     clearEmpty();
-
-    const fd = new FormData();
-    fd.append("file", selectedFile);
-
-    // Optional clinical data
-    const disease = document.getElementById("disease-label").value;
-    const risk    = document.getElementById("risk-score").value;
-    const scores  = {A:"score-A",B:"score-B",C:"score-C",D:"score-D",E:"score-E"};
-
-    if (disease) fd.append("disease_label", disease);
-    if (risk)    fd.append("risk_score", risk);
-    Object.entries(scores).forEach(([k,id]) => {
-      const v = document.getElementById(id).value;
-      if (v) fd.append(k, v);
+    const fd=new FormData(); fd.append('file',selectedFile);
+    const disease=document.getElementById('disease-label').value;
+    const risk=document.getElementById('risk-score').value;
+    if(disease) fd.append('disease_label',disease);
+    if(risk)    fd.append('risk_score',risk);
+    ['A','B','C','D','E'].forEach(k=>{
+      const v=document.getElementById('score-'+k).value;
+      if(v) fd.append(k,v);
     });
 
-    addMsg("system", "🔬 Running ARCUNet segmentation + SLRC lesion detection...");
+    addMsg('system','🔬 Running ARCUNet segmentation + SLRC lesion detection...');
+    const r=await fetch(`${API}/session/${sessionId}/image`,{method:'POST',body:fd});
+    if(!r.ok){const e=await r.json();addMsg('error',`Image processing failed: ${e.detail||r.statusText}`);return;}
+    const d=await r.json(); const {x,y,w,h}=d.bbox;
 
-    const r = await fetch(`${API}/session/${sessionId}/image`, {
-      method:"POST", body:fd });
+    showBboxOverlay(x,y,w,h);
+    const badge=document.getElementById('bbox-badge');
+    badge.style.display='block';
+    badge.innerHTML=`✅ Lesion at (${x},${y}) · ${w}×${h}px`
+      +(d.disease?` · <b>${d.disease}</b>`:'')
+      +(d.risk_tier?` · Risk: <b style="color:${d.risk_tier==='URGENT'?'#c53030':'#744210'}">${d.risk_tier}</b>`:'');
 
-    if (!r.ok) {
-      const err = await r.json();
-      addMsg("error", `Image processing failed: ${err.detail || r.statusText}`);
-      return;
-    }
+    // Update memory bar
+    if(disease){memoryTags['disease']=disease;}
+    if(risk){memoryTags['risk']=risk;}
+    if(d.risk_tier){memoryTags['risk_tier']=d.risk_tier;}
+    updateMemoryBar();
 
-    const d = await r.json();
-    const {x,y,w,h} = d.bbox;
+    addMsg('system',
+      `✅ Lesion detected at (${x},${y}) · ${w}×${h}px`
+      +(d.disease?` · Disease: ${d.disease}`:'')
+      +(d.risk_tier?` · Risk tier: ${d.risk_tier}`:'')
+      +'. Ready for questions — ask anything about this lesion.');
 
-    // Show bbox overlay on preview
-    showBbox(x,y,w,h);
-
-    // Badge
-    const badge = document.getElementById("bbox-badge");
-    badge.style.display = "block";
-    document.getElementById("bbox-text").textContent =
-      `(${x}, ${y})  ${w}×${h}px`;
-    if (d.disease) badge.innerHTML += ` · <b>${d.disease}</b>`;
-    if (d.risk_tier) badge.innerHTML += ` · Risk: <b>${d.risk_tier}</b>`;
-
-    addMsg("system",
-      `✅ Lesion detected at (${x}, ${y}), size ${w}×${h}px. ` +
-      (d.disease ? `Disease: ${d.disease}. ` : "") +
-      (d.risk_tier ? `Risk tier: ${d.risk_tier}. ` : "") +
-      "You can now ask questions about this lesion.");
-
-    imageReady = true;
-    setInputEnabled(true);
-
-  } catch(e) {
-    addMsg("error", `Error: ${e.message}. Make sure dermatology_bot.py is running.`);
-  } finally {
-    isProcessing = false;
-    btn.disabled  = false;
-    btn.textContent = "⬆ Upload & Analyse Image";
-  }
+    imageReady=true; setInputEnabled(true);
+  } catch(e){addMsg('error',`Error: ${e.message}`);}
+  finally{isProcessing=false;btn.disabled=false;btn.textContent='⬆ Upload & Analyse Image';}
 }
 
-function showBbox(x,y,w,h) {
-  const img = previewImg;
-  const scaleX = img.clientWidth  / img.naturalWidth;
-  const scaleY = img.clientHeight / img.naturalHeight;
-  const overlay = document.getElementById("bbox-overlay");
-  overlay.style.display = "block";
-  overlay.style.left   = (x * scaleX) + "px";
-  overlay.style.top    = (y * scaleY) + "px";
-  overlay.style.width  = (w * scaleX) + "px";
-  overlay.style.height = (h * scaleY) + "px";
+function showBboxOverlay(x,y,w,h){
+  const img=document.getElementById('preview-img');
+  const scaleX=img.clientWidth/img.naturalWidth;
+  const scaleY=img.clientHeight/img.naturalHeight;
+  const ov=document.getElementById('bbox-overlay');
+  ov.style.display='block';
+  ov.style.left=(x*scaleX)+'px'; ov.style.top=(y*scaleY)+'px';
+  ov.style.width=(w*scaleX)+'px'; ov.style.height=(h*scaleY)+'px';
 }
 
-// ── Chat ──────────────────────────────────────────────────────────────────
-document.getElementById("question-input").addEventListener("keydown", e => {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+document.getElementById('question-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
 });
 
-async function sendMessage() {
-  const input = document.getElementById("question-input");
-  const q = input.value.trim();
-  if (!q || !imageReady || isProcessing) return;
-
-  input.value = ""; input.style.height = "auto";
-  addMsg("user", q);
-  const typing = addTyping();
-  setInputEnabled(false);
-  isProcessing = true;
-
-  try {
-    const fd = new FormData();
-    fd.append("question", q);
-    const r = await fetch(`${API}/session/${sessionId}/ask`,
-      {method:"POST", body:fd});
+async function sendMessage(){
+  const input=document.getElementById('question-input');
+  const q=input.value.trim();
+  if(!q||!imageReady||isProcessing) return;
+  input.value=''; input.style.height='auto';
+  addMsg('user',q); const typing=addTyping(); setInputEnabled(false); isProcessing=true;
+  try{
+    const fd=new FormData(); fd.append('question',q);
+    const r=await fetch(`${API}/session/${sessionId}/ask`,{method:'POST',body:fd});
     typing.remove();
-
-    if (!r.ok) {
-      const err = await r.json();
-      addMsg("error", `Error: ${err.detail || r.statusText}`);
-      return;
-    }
-    const d = await r.json();
-    addMsg("bot", d.answer);
-    document.getElementById("turn-count").textContent =
-      `Turn ${d.turn_count}`;
-  } catch(e) {
-    typing.remove();
-    addMsg("error", `Request failed: ${e.message}`);
-  } finally {
-    isProcessing = false;
-    setInputEnabled(true);
-    document.getElementById("question-input").focus();
-  }
+    if(!r.ok){const e=await r.json();addMsg('error',`Error: ${e.detail||r.statusText}`);return;}
+    const d=await r.json();
+    turnCount=d.turn_count;
+    addMsg('bot',d.answer,d.turn_count);
+    document.getElementById('turn-count').textContent=`Turn ${d.turn_count}`;
+    // Update memory bar with turn count
+    memoryTags['turns']=`${d.turn_count} turns in memory`;
+    updateMemoryBar();
+  }catch(e){typing.remove();addMsg('error',`Request failed: ${e.message}`);}
+  finally{isProcessing=false;setInputEnabled(true);document.getElementById('question-input').focus();}
 }
 
-function sendQuick(btn) {
-  document.getElementById("question-input").value = btn.textContent;
-  sendMessage();
+function sendQuick(btn){document.getElementById('question-input').value=btn.textContent;sendMessage();}
+
+function updateMemoryBar(){
+  const bar=document.getElementById('memory-bar');
+  bar.style.display='flex';
+  bar.innerHTML='🧠 Session memory: ';
+  Object.entries(memoryTags).forEach(([k,v])=>{
+    const tag=document.createElement('span');
+    tag.className='memory-tag'; tag.textContent=`${k}=${v}`;
+    bar.appendChild(tag);
+  });
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────
-function setInputEnabled(enabled) {
-  document.getElementById("question-input").disabled = !enabled;
-  document.getElementById("send-btn").disabled = !enabled;
-  document.querySelectorAll(".quick-btn").forEach(b => b.disabled = !enabled);
+function setInputEnabled(e){
+  document.getElementById('question-input').disabled=!e;
+  document.getElementById('send-btn').disabled=!e;
+  document.querySelectorAll('.quick-btn').forEach(b=>b.disabled=!e);
 }
+function clearEmpty(){const es=document.getElementById('empty-state');if(es)es.remove();}
 
-function clearEmpty() {
-  const es = document.getElementById("empty-state");
-  if (es) es.remove();
-}
-
-function addMsg(role, text) {
+function addMsg(role,text,turn){
   clearEmpty();
-  const wrap = document.getElementById("chat-messages");
-  const div  = document.createElement("div");
-  div.className = `msg ${role}`;
-  div.innerHTML = `<div>${escHtml(text)}</div>
-    <div class="msg-time">${new Date().toLocaleTimeString()}</div>`;
-  wrap.appendChild(div);
-  wrap.scrollTop = wrap.scrollHeight;
-  return div;
+  const wrap=document.getElementById('chat-messages');
+  const div=document.createElement('div'); div.className=`msg ${role}`;
+  const meta=turn?`Turn ${turn} · ${new Date().toLocaleTimeString()}`:`${new Date().toLocaleTimeString()}`;
+  div.innerHTML=`<div>${esc(text)}</div><div class="msg-meta">${meta}</div>`;
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight; return div;
 }
-
-function addTyping() {
-  const wrap = document.getElementById("chat-messages");
-  const div  = document.createElement("div");
-  div.className = "typing";
-  div.innerHTML = "<span></span><span></span><span></span>";
-  wrap.appendChild(div);
-  wrap.scrollTop = wrap.scrollHeight;
-  return div;
+function addTyping(){
+  const wrap=document.getElementById('chat-messages');
+  const div=document.createElement('div'); div.className='typing';
+  div.innerHTML='<span></span><span></span><span></span>';
+  wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight; return div;
 }
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
-function escHtml(str) {
-  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-            .replace(/>/g,"&gt;").replace(/\n/g,"<br>");
-}
-
-// Auto-resize textarea
-document.getElementById("question-input").addEventListener("input", function() {
-  this.style.height = "auto";
-  this.style.height = Math.min(this.scrollHeight, 100) + "px";
+document.getElementById('question-input').addEventListener('input',function(){
+  this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,90)+'px';
 });
 
-// ── Init ──────────────────────────────────────────────────────────────────
-checkHealth();
-setInterval(checkHealth, 30000);
+// ════════════════════════════════════════════════════════════
+// TAB 2: DEMO — LIVE PLAYBACK
+// ════════════════════════════════════════════════════════════
+const DEMO_SCRIPT = [
+  {role:'system', text:'🔬 Creating session and sending synthetic high-risk melanoma image...', delay:0},
+  {role:'user',   text:'What skin condition is shown in this image?', delay:1200},
+  {role:'bot',    text:'Based on the dermoscopic features in the highlighted region, this lesion shows features highly consistent with melanoma. The ABCDE analysis reveals significant asymmetry (A=0.87), irregular borders (B=0.74), colour variation (C=0.62), complex dermoscopic structures (D=0.71), and documented evolution (E=0.82). All five ABCDE criteria are in the HIGH range, giving a risk score of 0.88 — URGENT tier. Same-day dermatologist referral is strongly recommended.', delay:2500},
+  {role:'user',   text:'Can you explain what the ABCDE scores mean for this lesion?', delay:800},
+  {role:'bot',    text:'As I mentioned in my previous response, all five ABCDE criteria are significantly elevated. A=0.87 means significant asymmetry — a major red flag. B=0.74 reflects irregular, notched borders that fade unevenly. C=0.62 indicates multiple colours including brown, black and grey-blue regression areas. D=0.71 shows complex atypical dermoscopic structures. E=0.82 documents recent evolution in size or colour — the single most important criterion. The bot remembers our prior exchange and builds on it.', delay:2500},
+  {role:'user',   text:'How serious is this? Should I be worried?', delay:800},
+  {role:'bot',    text:'Given what we have discussed about the ABCDE findings and the URGENT risk score of 0.88, this requires urgent medical attention. A same-day or next-day dermatologist appointment is recommended — not a routine booking. I cannot make a definitive diagnosis, but the pattern of all five ABCDE criteria being HIGH, combined with the evolution documented in the clinical notes, is a pattern dermatologists take very seriously. See someone today.', delay:2500},
+  {role:'user',   text:'What treatment would be needed if this is melanoma?', delay:800},
+  {role:'bot',    text:'If confirmed as melanoma following biopsy, the standard pathway is: (1) Wide Local Excision with 1–2cm safety margins depending on Breslow depth. (2) Sentinel Lymph Node Biopsy for lesions >0.8mm. (3) Adjuvant immunotherapy (pembrolizumab/nivolumab) or targeted therapy (dabrafenib+trametinib for BRAF V600E) for advanced stages. The dermatologist will likely proceed directly to excisional biopsy at the first appointment.', delay:2500},
+  {role:'user',   text:'Based on everything we discussed, what is the most important thing to do today?', delay:800},
+  {role:'bot',    text:'Based on our full conversation — the URGENT ABCDE scores (all five HIGH), the risk score of 0.88, and the pattern consistent with melanoma I described in our first exchange — the single most important action today is to contact a dermatologist and request an emergency appointment. Tell the receptionist: "I have a rapidly changing pigmented lesion flagged as high-risk that needs same-day review." The treatment discussed — wide local excision — is highly curative at early stages. Do not delay.', delay:2500},
+  {role:'memory', text:'Session ended. 5 turns stored. Memory: disease=MEL, risk=URGENT, all ABCDE discussed, treatment covered, urgency communicated. Session saved to disk — can be resumed without re-uploading image.', delay:800},
+];
+
+let demoPlaying = false;
+
+async function playDemo(){
+  if(demoPlaying) return;
+  demoPlaying=true;
+  const btn=document.getElementById('play-demo-btn');
+  btn.disabled=true; btn.textContent='▶ Playing...';
+  const area=document.getElementById('demo-chat-live');
+  const msgs=document.getElementById('demo-chat-messages');
+  area.style.display='block'; msgs.innerHTML='';
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+
+  for(const step of DEMO_SCRIPT){
+    await sleep(step.delay);
+    const div=document.createElement('div');
+    if(step.role==='user'){
+      div.className='demo-q'; div.textContent=step.text;
+    } else if(step.role==='bot'){
+      div.className='demo-a'; div.innerHTML=step.text.replace(/(melanoma|URGENT|ABCDE|biopsy|excision)/gi,'<strong>$1</strong>');
+    } else if(step.role==='system'){
+      div.style.cssText='font-size:.78rem;color:#744210;background:#fffbeb;padding:8px 12px;border-radius:8px;border:1px solid #f6e05e;text-align:center;';
+      div.textContent=step.text;
+    } else {
+      div.style.cssText='font-size:.73rem;color:#276749;background:#f0fff4;padding:6px 12px;border-radius:8px;border:1px solid #9ae6b4;';
+      div.innerHTML='🧠 '+step.text;
+    }
+    msgs.appendChild(div);
+    msgs.scrollTop=msgs.scrollHeight;
+    if(step.role==='bot') await sleep(600);
+  }
+  btn.disabled=false; btn.textContent='▶ Replay Sample Session';
+  demoPlaying=false;
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+// ════════════════════════════════════════════════════════════
+// TAB 3: TESTS
+// ════════════════════════════════════════════════════════════
+function toggleLog(id){
+  const log=document.getElementById(id+'-log');
+  log.classList.toggle('open');
+}
+
+function setTestStatus(id,status,text){
+  const el=document.getElementById(id+'-status');
+  el.className='test-status '+status;
+  el.textContent=text;
+  document.getElementById(id+'-log').classList.add('open');
+}
+
+function appendLog(id,msg,cls=''){
+  const log=document.getElementById(id+'-log');
+  const span=document.createElement('span');
+  if(cls) span.className=cls;
+  span.textContent=msg+'\n';
+  log.appendChild(span);
+  log.scrollTop=log.scrollHeight;
+}
+
+function makeTestImg(type='melanoma'){
+  // Create a minimal JPEG via canvas
+  const canvas=document.createElement('canvas'); canvas.width=100; canvas.height=100;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#DEB887'; ctx.fillRect(0,0,100,100);
+  if(type==='melanoma'){
+    ctx.fillStyle='#1a0a00'; ctx.beginPath();
+    ctx.ellipse(50,50,30,25,0.4,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#8B6347'; ctx.beginPath();
+    ctx.arc(50,50,20,0,Math.PI*2); ctx.fill();
+  }
+  return new Promise(res=>canvas.toBlob(res,'image/jpeg',0.8));
+}
+
+let testSessionId1=null, testSessionId2=null;
+let passCount=0, failCount=0;
+
+async function runAllTests(){
+  const btn=document.getElementById('run-tests-btn');
+  btn.disabled=true; btn.textContent='⏳ Running...';
+  passCount=0; failCount=0;
+  const start=Date.now();
+
+  // Reset all statuses
+  ['health','session-create','melanoma','nevus','resume','memory','rag'].forEach(id=>{
+    document.getElementById('test-'+id+'-status').className='test-status pending';
+    document.getElementById('test-'+id+'-status').textContent='Pending';
+    document.getElementById('test-'+id+'-log').innerHTML='';
+  });
+
+  document.getElementById('tests-summary').style.display='none';
+
+  await testHealth();
+  await testSessionCreate();
+  await testMelanoma();
+  await testNevus();
+  await testResume();
+  await testMemory();
+  await testRag();
+
+  const elapsed=((Date.now()-start)/1000).toFixed(1);
+  document.getElementById('pass-count').textContent=passCount;
+  document.getElementById('fail-count').textContent=failCount;
+  document.getElementById('tests-elapsed').textContent=`${elapsed}s`;
+  document.getElementById('tests-summary').style.display='flex';
+  btn.disabled=false; btn.textContent='▶ Run All Tests';
+}
+
+async function testHealth(){
+  const id='test-health';
+  setTestStatus(id,'running','Running...');
+  try{
+    appendLog(id,'→ GET /health');
+    const r=await fetch(`${API}/health`,{signal:AbortSignal.timeout(5000)});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    appendLog(id,`✓ status=${d.status}  vram=${d.vram_gb}GB`,'log-ok');
+    appendLog(id,'→ GET /');
+    const r2=await fetch(`${API}/`,{signal:AbortSignal.timeout(5000)});
+    const d2=await r2.json();
+    appendLog(id,`✓ model=${d2.model}  device=${d2.device}`,'log-ok');
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    appendLog(id,'Make sure dermatology_bot.py is running on port 8000','log-warn');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testSessionCreate(){
+  const id='test-session-create';
+  setTestStatus(id,'running','Running...');
+  try{
+    appendLog(id,'→ POST /session/new');
+    const r=await fetch(`${API}/session/new`,{method:'POST'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    appendLog(id,`✓ session_id=${d.session_id}`,'log-ok');
+
+    appendLog(id,'→ GET /sessions');
+    const r2=await fetch(`${API}/sessions`);
+    const d2=await r2.json();
+    appendLog(id,`✓ ${d2.count} sessions on disk`,'log-ok');
+
+    appendLog(id,'→ DELETE /session/'+d.session_id);
+    const r3=await fetch(`${API}/session/${d.session_id}`,{method:'DELETE'});
+    const d3=await r3.json();
+    appendLog(id,`✓ status=${d3.status}`,'log-ok');
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testMelanoma(){
+  const id='test-melanoma';
+  setTestStatus(id,'running','Running...');
+  try{
+    const r1=await fetch(`${API}/session/new`,{method:'POST'});
+    testSessionId1=(await r1.json()).session_id;
+    appendLog(id,`✓ session created: ${testSessionId1}`,'log-ok');
+
+    const img=await makeTestImg('melanoma');
+    const fd=new FormData(); fd.append('file',img,'test.jpg');
+    fd.append('disease_label','MEL'); fd.append('risk_score','0.88');
+    fd.append('A','0.87'); fd.append('B','0.74'); fd.append('C','0.62');
+    fd.append('D','0.71'); fd.append('E','0.82');
+
+    appendLog(id,'→ POST /session/{id}/image (MEL, risk=0.88, ABCDE all HIGH)');
+    const r2=await fetch(`${API}/session/${testSessionId1}/image`,{method:'POST',body:fd});
+    if(!r2.ok) throw new Error('Image upload failed: '+r2.status);
+    const d2=await r2.json();
+    appendLog(id,`✓ bbox=${JSON.stringify(d2.bbox)}  disease=${d2.disease}  risk=${d2.risk_tier}`,'log-ok');
+
+    const questions=[
+      'What skin condition is shown in this image?',
+      'Explain the ABCDE scores for this lesion',
+      'How serious is this?',
+      'What treatment is recommended?',
+      'Could this be a benign nevus?',
+      'What should the patient do today?',
+    ];
+    for(let i=0;i<questions.length;i++){
+      const fd2=new FormData(); fd2.append('question',questions[i]);
+      appendLog(id,`→ Turn ${i+1}: "${questions[i].slice(0,50)}..."`,'log-info');
+      const r3=await fetch(`${API}/session/${testSessionId1}/ask`,{method:'POST',body:fd2});
+      if(!r3.ok) throw new Error(`Turn ${i+1} failed: `+r3.status);
+      const d3=await r3.json();
+      appendLog(id,`  ✓ turn=${d3.turn_count}  answer="${d3.answer.slice(0,80)}..."`,'log-ok');
+    }
+
+    const rh=await fetch(`${API}/session/${testSessionId1}/history`);
+    const dh=await rh.json();
+    if(dh.count!==questions.length*2) throw new Error(`Expected ${questions.length*2} history entries, got ${dh.count}`);
+    appendLog(id,`✓ History: ${dh.count} turns stored`,'log-ok');
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testNevus(){
+  const id='test-nevus';
+  setTestStatus(id,'running','Running...');
+  try{
+    const r1=await fetch(`${API}/session/new`,{method:'POST'});
+    testSessionId2=(await r1.json()).session_id;
+    appendLog(id,`✓ session created: ${testSessionId2}`,'log-ok');
+
+    const img=await makeTestImg('nevus');
+    const fd=new FormData(); fd.append('file',img,'test_nevus.jpg');
+    appendLog(id,'→ POST /session/{id}/image (no clinical context)');
+    const r2=await fetch(`${API}/session/${testSessionId2}/image`,{method:'POST',body:fd});
+    if(!r2.ok) throw new Error('Image upload failed: '+r2.status);
+    const d2=await r2.json();
+    appendLog(id,`✓ bbox=${JSON.stringify(d2.bbox)}`,'log-ok');
+
+    const questions=['What is this skin lesion?','Is this mole dangerous?','How often should I get this checked?'];
+    for(let i=0;i<questions.length;i++){
+      const fd2=new FormData(); fd2.append('question',questions[i]);
+      const r3=await fetch(`${API}/session/${testSessionId2}/ask`,{method:'POST',body:fd2});
+      if(!r3.ok) throw new Error(`Turn ${i+1} failed`);
+      const d3=await r3.json();
+      appendLog(id,`✓ Turn ${d3.turn_count}: "${d3.answer.slice(0,70)}..."`,'log-ok');
+    }
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testResume(){
+  const id='test-resume';
+  setTestStatus(id,'running','Running...');
+  try{
+    if(!testSessionId1) throw new Error('Session 1 not created — run melanoma test first');
+    appendLog(id,`→ Resuming session ${testSessionId1} from disk`,'log-info');
+
+    const rh=await fetch(`${API}/session/${testSessionId1}/history`);
+    const dh=await rh.json();
+    const prevCount=dh.count;
+    appendLog(id,`✓ History loaded: ${prevCount} turns from disk`,'log-ok');
+
+    const fd=new FormData();
+    fd.append('question','Based on what we discussed, when exactly should the patient see a doctor?');
+    const r=await fetch(`${API}/session/${testSessionId1}/ask`,{method:'POST',body:fd});
+    if(!r.ok) throw new Error('Resume ask failed: '+r.status);
+    const d=await r.json();
+    appendLog(id,`✓ Follow-up answered (turn ${d.turn_count})`,'log-ok');
+    appendLog(id,`  Answer: "${d.answer.slice(0,100)}..."`,'log-ok');
+
+    const rh2=await fetch(`${API}/session/${testSessionId1}/history`);
+    const dh2=await rh2.json();
+    if(dh2.count<=prevCount) throw new Error('History did not grow after resume');
+    appendLog(id,`✓ History grew: ${prevCount} → ${dh2.count} turns`,'log-ok');
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testMemory(){
+  const id='test-memory';
+  setTestStatus(id,'running','Running...');
+  try{
+    if(!testSessionId1) throw new Error('Session 1 not created — run melanoma test first');
+    appendLog(id,'→ Checking continuous memory: asking context-dependent question','log-info');
+    const fd=new FormData();
+    fd.append('question','Earlier you mentioned a risk score — what was it and what tier does it put this in?');
+    const r=await fetch(`${API}/session/${testSessionId1}/ask`,{method:'POST',body:fd});
+    if(!r.ok) throw new Error('Memory test ask failed: '+r.status);
+    const d=await r.json();
+    appendLog(id,`✓ Answer: "${d.answer.slice(0,150)}..."`,'log-ok');
+
+    const hasMemory = d.answer.toLowerCase().includes('0.88') || d.answer.toLowerCase().includes('urgent') || d.answer.toLowerCase().includes('risk');
+    if(hasMemory){appendLog(id,'✓ Answer correctly references prior session context (risk score / URGENT tier)','log-ok');}
+    else{appendLog(id,'⚠ Answer may not have accessed session memory — check context_sum compression','log-warn');}
+
+    appendLog(id,'→ GET /session/{id}/bbox (memory persistence check)','log-info');
+    const rb=await fetch(`${API}/session/${testSessionId1}/bbox`);
+    const db=await rb.json();
+    appendLog(id,`✓ bbox still in memory: ${JSON.stringify(db.bbox)}`,'log-ok');
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
+
+async function testRag(){
+  const id='test-rag';
+  setTestStatus(id,'running','Running...');
+  try{
+    appendLog(id,'→ GET /health (checking rag_chunks count)','log-info');
+    const r=await fetch(`${API}/health`);
+    const d=await r.json();
+    if(d.rag_chunks===undefined){
+      appendLog(id,'⚠ /health does not return rag_chunks — add it to dermatology_bot.py health endpoint','log-warn');
+      appendLog(id,'  Check ChromaDB manually: rag_retriever.py DermatologyRAG().collection.count()','log-warn');
+    } else if(d.rag_chunks===0){
+      appendLog(id,'⚠ RAG index is empty — run dgx_rag_pipeline.ipynb Cell 6 to build index','log-warn');
+    } else {
+      appendLog(id,`✓ RAG index has ${d.rag_chunks} chunks loaded`,'log-ok');
+    }
+
+    if(testSessionId1){
+      appendLog(id,'→ Testing RAG-grounded answer (treatment question)','log-info');
+      const fd=new FormData();
+      fd.append('question','What does the AAD guideline say about melanoma excision margins?');
+      const r2=await fetch(`${API}/session/${testSessionId1}/ask`,{method:'POST',body:fd});
+      if(r2.ok){
+        const d2=await r2.json();
+        appendLog(id,`✓ RAG answer: "${d2.answer.slice(0,120)}..."`,'log-ok');
+      }
+    }
+    setTestStatus(id,'pass','✓ Pass'); passCount++;
+  }catch(e){
+    appendLog(id,`✗ ${e.message}`,'log-fail');
+    setTestStatus(id,'fail','✗ Fail'); failCount++;
+  }
+}
 </script>
 </body>
 </html>

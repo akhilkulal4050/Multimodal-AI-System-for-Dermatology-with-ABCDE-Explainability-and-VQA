@@ -68,12 +68,15 @@ ARCUNET_PY_PATH = _BASE / "ARCUNet.py"
 SLRC_PY_PATH    = _BASE / "SLRC.py"
 
 # Model checkpoints
-ARCUNET_CKPT    = Path("/data/Stagewise Dataset/ARCUNet/checkpoints/arcunet_best.pt")
-RLLAVA_CKPT     = Path("/data/Stagewise Dataset/Stage7/rllava_checkpoints/stage2_best")
-BASE_MODEL_ID   = "unsloth/llava-v1.6-mistral-7b-hf-bnb-4bit"
+ARCUNET_CKPT    = Path("/home/vjti-comp/Desktop/Final Project Code/SLSf/arcunet_best_v3.pt")
+# Checkpoint saved by nutriderm_rllava_train.py on DGX
+# Copy from DGX: scp -r prasannam24-26@172.18.33.4:/home/prasannam24-26/rllava/checkpoints/rllava_stage2_best .
+RLLAVA_CKPT     = Path("/home/vjti-comp/Desktop/Final Project Code/VQA/rllava/rllava/checkpoints/rllava_stage2_best")
+# Base model is stored locally in the VQA folder — no HF download needed
+BASE_MODEL_ID   = "/home/vjti-comp/Desktop/Final Project Code/VQA/llava-v1.6-mistral-7b-hf"
 
 # Session storage
-SESSIONS_DIR    = Path("/data/Stagewise Dataset/Stage7/sessions")
+SESSIONS_DIR    = Path("/home/vjti-comp/Desktop/Final Project Code/VQA/sessions")
 SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Inference settings
@@ -529,6 +532,19 @@ def retrieve_rag_context(question: str, disease_label: str = None,
         session_disease=session_disease,
     )
 
+# ══════════════════════════════════════════════════════════════════════════════
+# ARCUNet preprocessing transform
+# Must match the resize/normalize pipeline used in ARCUNet_Train2.
+# If your training notebook used different mean/std stats, update them here.
+# ══════════════════════════════════════════════════════════════════════════════
+_ARCUNET_TRANSFORM = transforms.Compose([
+    transforms.Resize((512, 512)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                          std=[0.229, 0.224, 0.225]),
+])
+
+
 def remove_hair(image_np: np.ndarray) -> np.ndarray:
     """
     Black-hat morphological hair removal matching ARCUNet_Train2 preprocessing.
@@ -945,21 +961,33 @@ def load_all_models():
     gc.collect()
     torch.cuda.empty_cache()
 
-    from unsloth import FastVisionModel
+    # Pure transformers + peft — matches how model was trained in nutriderm_rllava_train.py
+    from transformers import (LlavaNextForConditionalGeneration,
+                              LlavaNextProcessor, BitsAndBytesConfig)
     from peft import PeftModel
-    from transformers import LlavaNextProcessor
 
-    _base, _ = FastVisionModel.from_pretrained(
-        BASE_MODEL_ID,
+    bnb_cfg = BitsAndBytesConfig(
         load_in_4bit=True,
-        dtype=None,
-        max_seq_length=2048,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_use_double_quant=True,
     )
+    # BASE_MODEL_ID already points to local folder — no HF download needed
+    _model_src = BASE_MODEL_ID
+    log.info(f"Loading base model from: {_model_src}")
+    _base = LlavaNextForConditionalGeneration.from_pretrained(
+        _model_src,
+        quantization_config=bnb_cfg,
+        device_map="auto",
+        low_cpu_mem_usage=True,
+        local_files_only=True,
+    )
+    _base.config.use_cache = False
     rllava = PeftModel.from_pretrained(_base, str(RLLAVA_CKPT))
-    FastVisionModel.for_inference(rllava)
     rllava.eval()
 
-    processor = LlavaNextProcessor.from_pretrained("llava-hf/llava-v1.6-mistral-7b-hf")
+    processor = LlavaNextProcessor.from_pretrained(
+        _model_src, local_files_only=True)
     text_tok  = processor.tokenizer
     if text_tok.pad_token is None:
         text_tok.pad_token    = text_tok.eos_token

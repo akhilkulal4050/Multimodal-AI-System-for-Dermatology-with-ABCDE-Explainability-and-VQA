@@ -120,7 +120,7 @@ class DermatologyOrchestrator:
 
     def set_image(self, session_id: str, pil_image, image_path: str = None):
         """Run ARCUNet+SLRC, store bbox and blended image in session."""
-        return self.bot.set_image(session_id, pil_image, image_path=image_path)
+        return self.bot.process_image(session_id, pil_image, image_path=image_path)
 
     def set_clinical_context(self, session_id: str,
                               disease_label: str = None,
@@ -225,7 +225,7 @@ class DermatologyOrchestrator:
         else:
             x, y, w, h = mem.bbox
             bbox_str   = f"[{x},{y},{x+w},{y+h}]"
-            prompt     = mem.build_prompt(question, combined_ctx)
+            prompt     = mem.build_prompt(question, bbox_str, combined_ctx)
             try:
                 import torch
                 inputs = self.bot.processor(text=prompt, images=mem.blended_image, return_tensors="pt")

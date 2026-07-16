@@ -1,0 +1,65 @@
+{
+  "session_id": "a9914271",
+  "image_path": null,
+  "bbox": [
+    129,
+    0,
+    501,
+    501
+  ],
+  "turns": [
+    {
+      "role": "user",
+      "content": "What is this lesion?",
+      "ts": "2026-07-09T10:27:41.742549"
+    },
+    {
+      "role": "assistant",
+      "content": "Allergic Contact Dermatitis \u2014 Low risk. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:27:41.742575"
+    },
+    {
+      "role": "user",
+      "content": "Is this malignant?",
+      "ts": "2026-07-09T10:27:51.362344"
+    },
+    {
+      "role": "assistant",
+      "content": "No",
+      "ts": "2026-07-09T10:27:51.362371"
+    },
+    {
+      "role": "user",
+      "content": "Explain about this disease",
+      "ts": "2026-07-09T10:28:10.320439"
+    },
+    {
+      "role": "assistant",
+      "content": "Allergic Contact Dermatitis \u2014 Low risk. A=0.0,B=0.0,C=0.0,D=0.0,E=0.0.",
+      "ts": "2026-07-09T10:28:10.320467"
+    },
+    {
+      "role": "user",
+      "content": "What treatment is needed?",
+      "ts": "2026-07-09T10:28:14.883762"
+    },
+    {
+      "role": "assistant",
+      "content": "No treatment necessary.",
+      "ts": "2026-07-09T10:28:14.883786"
+    },
+    {
+      "role": "user",
+      "content": "How urgent is a referral?",
+      "ts": "2026-07-09T10:28:18.081393"
+    },
+    {
+      "role": "assistant",
+      "content": "Referral requested: No.",
+      "ts": "2026-07-09T10:28:18.081423"
+    }
+  ],
+  "context_sum": "",
+  "created_at": "2026-07-09T10:27:34.613623",
+  "updated_at": "2026-07-09T10:28:18.081426"
+}

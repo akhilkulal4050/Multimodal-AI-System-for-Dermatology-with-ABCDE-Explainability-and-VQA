@@ -59,3 +59,10 @@ Thumbs.db
 hf_token.txt
 kaggle.json
 secrets.py
+
+# Never commit tokens or API keys
+*.env
+.env
+hf_token.txt
+kaggle.json
+secrets.py

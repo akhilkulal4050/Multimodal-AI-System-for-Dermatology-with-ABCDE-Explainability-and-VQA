@@ -52,3 +52,10 @@ logs/
 Thumbs.db
 .vscode/
 .idea/
+
+# Never commit tokens or API keys
+*.env
+.env
+hf_token.txt
+kaggle.json
+secrets.py
